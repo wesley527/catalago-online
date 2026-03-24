@@ -52,6 +52,13 @@ export const OrderManagement = () => {
     }
   };
 
+  const getStatusText = (status: string) => {
+    if (status === 'pending') return 'Pendente';
+    if (status === 'confirmed') return 'Confirmado';
+    if (status === 'delivered') return 'Entregue';
+    return status;
+  };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('pt-BR', {
       day: '2-digit',
@@ -104,27 +111,27 @@ export const OrderManagement = () => {
               >
                 <div className="flex-1 text-left">
                   <div className="flex items-center gap-4 mb-2">
-                    <span className="font-semibold text-gray-900">#{order.id.slice(0, 8)}</span>
+                    <span className="font-semibold text-gray-900">
+                      #{order.id.slice(0, 8)}
+                    </span>
                     <span
                       className={`px-3 py-1 rounded-full text-sm font-semibold ${
                         order.status === 'pending'
                           ? 'bg-yellow-100 text-yellow-800'
                           : order.status === 'confirmed'
-                            ? 'bg-blue-100 text-blue-800'
-                            : 'bg-green-100 text-green-800'
+                          ? 'bg-blue-100 text-blue-800'
+                          : 'bg-green-100 text-green-800'
                       }`}
                     >
-                      {order.status === 'pending'
-                        ? 'Pendente'
-                        : order.status === 'confirmed'
-                          ? 'Confirmado'
-                          : 'Entregue'}
+                      {getStatusText(order.status)}
                     </span>
                   </div>
                   <p className="text-sm text-gray-600">
                     {order.customer_name} • {formatPhone(order.customer_phone)}
                   </p>
-                  <p className="text-sm text-gray-500">{formatDate(order.created_at)}</p>
+                  <p className="text-sm text-gray-500">
+                    {formatDate(order.created_at)}
+                  </p>
                 </div>
 
                 <div className="flex items-center gap-4">
@@ -141,13 +148,14 @@ export const OrderManagement = () => {
 
               {expandedOrderId === order.id && (
                 <div className="border-t px-6 py-4 bg-gray-50 space-y-4">
-                  {/* Customer Info */}
+                  
+                  {/* Cliente */}
                   <div>
-                    <h4 className="font-semibold text-gray-900 mb-2">Informações do Cliente</h4>
+                    <h4 className="font-semibold text-gray-900 mb-2">
+                      Informações do Cliente
+                    </h4>
                     <div className="space-y-1 text-sm text-gray-700">
-                      <p>
-                        <strong>Nome:</strong> {order.customer_name}
-                      </p>
+                      <p><strong>Nome:</strong> {order.customer_name}</p>
                       <p>
                         <strong>WhatsApp:</strong>{' '}
                         <a
@@ -159,24 +167,19 @@ export const OrderManagement = () => {
                           {formatPhone(order.customer_phone)}
                         </a>
                       </p>
-                      <p>
-                        <strong>Endereço:</strong> {order.customer_address}
-                      </p>
+                      <p><strong>Endereço:</strong> {order.customer_address}</p>
                     </div>
                   </div>
 
-                  {/* Order Items */}
+                  {/* Produtos */}
                   <div>
                     <h4 className="font-semibold text-gray-900 mb-2">Produtos</h4>
                     <div className="space-y-2">
-                      {order.items && order.items.length > 0 ? (
+                      {order.items?.length > 0 ? (
                         order.items.map((item: any) => (
-                          <div
-                            key={item.id}
-                            className="flex justify-between text-sm bg-white p-2 rounded"
-                          >
+                          <div key={item.id} className="flex justify-between text-sm bg-white p-2 rounded">
                             <span>
-                              {item.products?.name || 'Produto desconhecido'} x{item.quantity}
+                              {item.products?.name || 'Produto'} x{item.quantity}
                             </span>
                             <span>
                               {formatCurrency(item.unit_price * item.quantity)}
@@ -189,19 +192,36 @@ export const OrderManagement = () => {
                     </div>
                   </div>
 
-                  {/* Status Change */}
+                  {/* Status */}
                   <div>
                     <h4 className="font-semibold text-gray-900 mb-2">Status</h4>
+
                     <select
                       value={order.status}
                       onChange={(e) => handleStatusChange(order.id, e.target.value)}
-                      className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="px-3 py-2 border border-gray-300 rounded-lg"
                     >
                       <option value="pending">Pendente</option>
                       <option value="confirmed">Confirmado</option>
                       <option value="delivered">Entregue</option>
                     </select>
+
+                    {order.status !== 'pending' && (
+                      <div className="flex gap-3 mt-3">
+                        <a
+                          href={`https://wa.me/55${order.customer_phone.replace(/\D/g, '')}?text=${encodeURIComponent(
+                            `Olá ${order.customer_name}, seu pedido foi atualizado para: ${getStatusText(order.status)}.\n\nObrigado pela preferência!`
+                          )}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-semibold transition"
+                        >
+                          Enviar status no WhatsApp
+                        </a>
+                      </div>
+                    )}
                   </div>
+
                 </div>
               )}
             </div>
