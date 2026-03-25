@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ChevronDown, AlertCircle } from 'lucide-react';
+import { useTenant } from '../../contexts/TenantContext';
 import { orderService } from '../../services/orderService';
 import { formatCurrency } from '../../lib/utils';
 
@@ -15,20 +16,25 @@ interface OrderWithItems {
 }
 
 export const OrderManagement = () => {
+  const { tenant } = useTenant();
   const [orders, setOrders] = useState<OrderWithItems[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
 
   useEffect(() => {
-    loadOrders();
-  }, []);
+    if (tenant?.id) {
+      loadOrders();
+    }
+  }, [tenant?.id]);
 
   const loadOrders = async () => {
+    if (!tenant?.id) return;
+
     try {
       setLoading(true);
       setError(null);
-      const data = await orderService.getOrdersWithItems();
+      const data = await orderService.getOrdersWithItems(tenant.id);
       setOrders(data);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erro ao carregar pedidos';
@@ -39,8 +45,10 @@ export const OrderManagement = () => {
   };
 
   const handleStatusChange = async (orderId: string, newStatus: string) => {
+    if (!tenant?.id) return;
+
     try {
-      await orderService.updateOrderStatus(orderId, newStatus);
+      await orderService.updateOrderStatus(orderId, newStatus, tenant.id);
       setOrders(
         orders.map((order) =>
           order.id === orderId ? { ...order, status: newStatus } : order

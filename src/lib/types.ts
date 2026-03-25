@@ -1,3 +1,39 @@
+export interface Tenant {
+  id: string;
+  name: string;
+  slug: string;
+  plan: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Category {
+  id: string;
+  name: string;
+  tenant_id: string;
+  created_at: string;
+}
+
+export interface Subscription {
+  id: string;
+  tenant_id: string;
+  plan: string;
+  status: 'active' | 'canceled' | 'expired';
+  expires_at: string | null;
+  created_at: string;
+}
+
+export interface TenantSettings {
+  id: string;
+  tenant_id: string;
+  primary_color: string;
+  secondary_color: string;
+  logo_url: string | null;
+  banner_url: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -5,6 +41,8 @@ export interface Product {
   price: number;
   stock_quantity: number;
   image_url: string | null;
+  tenant_id: string;
+  category_id: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -16,6 +54,7 @@ export interface Order {
   customer_address: string;
   total_amount: number;
   status: string;
+  tenant_id: string;
   created_at: string;
 }
 

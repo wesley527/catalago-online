@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { X } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
+import { useTenant } from '../contexts/TenantContext';
 import { generateWhatsAppLink, formatCurrency } from '../lib/utils';
 import { orderService } from '../services/orderService';
 import { productService } from '../services/productService';
@@ -14,6 +15,7 @@ interface CheckoutModalProps {
 
 export const CheckoutModal = ({ isOpen, onClose, onSuccess }: CheckoutModalProps) => {
   const { items, getTotal, clearCart } = useCart();
+  const { tenant } = useTenant();
   const [formData, setFormData] = useState<CheckoutData>({
     customer_name: '',
     customer_phone: '',
@@ -48,6 +50,11 @@ export const CheckoutModal = ({ isOpen, onClose, onSuccess }: CheckoutModalProps
 
     if (!validateForm()) return;
 
+    if (!tenant?.id) {
+      setErrors({ submit: 'Loja não identificada' });
+      return;
+    }
+
     setLoading(true);
     try {
       const total = getTotal();
@@ -57,7 +64,8 @@ export const CheckoutModal = ({ isOpen, onClose, onSuccess }: CheckoutModalProps
         formData.customer_name,
         formData.customer_phone,
         formData.customer_address,
-        total
+        total,
+        tenant.id
       );
 
       // Create order items

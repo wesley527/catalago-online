@@ -2,10 +2,12 @@ import { useState, useEffect } from 'react';
 import { Plus, Trash2, CreditCard as Edit2, AlertCircle } from 'lucide-react';
 import { Product } from '../../lib/types';
 import { productService } from '../../services/productService';
+import { useTenant } from '../../contexts/TenantContext';
 import { ProductForm } from './ProductForm';
 import { formatCurrency } from '../../lib/utils';
 
 export const ProductManagement = () => {
+  const { tenant } = useTenant();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -13,14 +15,18 @@ export const ProductManagement = () => {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
   useEffect(() => {
-    loadProducts();
-  }, []);
+    if (tenant?.id) {
+      loadProducts();
+    }
+  }, [tenant?.id]);
 
   const loadProducts = async () => {
+    if (!tenant?.id) return;
+
     try {
       setLoading(true);
       setError(null);
-      const data = await productService.getAllProducts();
+      const data = await productService.getAllProducts(tenant.id);
       setProducts(data);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erro ao carregar produtos';
@@ -32,9 +38,10 @@ export const ProductManagement = () => {
 
   const handleDeleteProduct = async (id: string) => {
     if (!window.confirm('Tem certeza que deseja deletar este produto?')) return;
+    if (!tenant?.id) return;
 
     try {
-      await productService.deleteProduct(id);
+      await productService.deleteProduct(id, tenant.id);
       setProducts(products.filter((p) => p.id !== id));
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erro ao deletar produto';

@@ -6,7 +6,8 @@ export const orderService = {
     customerName: string,
     customerPhone: string,
     customerAddress: string,
-    totalAmount: number
+    totalAmount: number,
+    tenantId: string
   ): Promise<Order> {
     const { data, error } = await supabase
       .from('orders')
@@ -16,6 +17,7 @@ export const orderService = {
           customer_phone: customerPhone,
           customer_address: customerAddress,
           total_amount: totalAmount,
+          tenant_id: tenantId,
           status: 'pending',
         },
       ])
@@ -46,22 +48,30 @@ export const orderService = {
     return data || [];
   },
 
-  async getAllOrders(): Promise<Order[]> {
-    const { data, error } = await supabase
+  async getAllOrders(tenantId?: string): Promise<Order[]> {
+    let query = supabase
       .from('orders')
       .select('*')
       .order('created_at', { ascending: false });
+
+    if (tenantId) {
+      query = query.eq('tenant_id', tenantId);
+    }
+
+    const { data, error } = await query;
 
     if (error) throw error;
     return data || [];
   },
 
-  async getOrderById(id: string): Promise<Order | null> {
-    const { data, error } = await supabase
-      .from('orders')
-      .select('*')
-      .eq('id', id)
-      .maybeSingle();
+  async getOrderById(id: string, tenantId?: string): Promise<Order | null> {
+    let query = supabase.from('orders').select('*').eq('id', id);
+
+    if (tenantId) {
+      query = query.eq('tenant_id', tenantId);
+    }
+
+    const { data, error } = await query.maybeSingle();
 
     if (error) throw error;
     return data;
@@ -77,10 +87,10 @@ export const orderService = {
     return data || [];
   },
 
-  async getOrdersWithItems(): Promise<
+  async getOrdersWithItems(tenantId?: string): Promise<
     Array<Order & { items: (OrderItem & { product_name?: string })[] }>
   > {
-    const { data, error } = await supabase
+    let query = supabase
       .from('orders')
       .select(
         `
@@ -93,15 +103,24 @@ export const orderService = {
       )
       .order('created_at', { ascending: false });
 
+    if (tenantId) {
+      query = query.eq('tenant_id', tenantId);
+    }
+
+    const { data, error } = await query;
+
     if (error) throw error;
     return data || [];
   },
 
-  async updateOrderStatus(id: string, status: string): Promise<void> {
-    const { error } = await supabase
-      .from('orders')
-      .update({ status })
-      .eq('id', id);
+  async updateOrderStatus(id: string, status: string, tenantId?: string): Promise<void> {
+    let query = supabase.from('orders').update({ status }).eq('id', id);
+
+    if (tenantId) {
+      query = query.eq('tenant_id', tenantId);
+    }
+
+    const { error } = await query;
 
     if (error) throw error;
   },

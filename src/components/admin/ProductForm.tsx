@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, AlertCircle } from 'lucide-react';
-import { Product } from '../../lib/types';
+import { Product, Category } from '../../lib/types';
 import { productService } from '../../services/productService';
+import { categoryService } from '../../services/categoryService';
+import { useTenant } from '../../contexts/TenantContext';
 import { supabase } from '../../lib/supabase';
 
 interface ProductFormProps {
@@ -11,13 +13,29 @@ interface ProductFormProps {
 }
 
 export const ProductForm = ({ product, onClose, onSuccess }: ProductFormProps) => {
+  const { tenant } = useTenant();
+  const [categories, setCategories] = useState<Category[]>([]);
   const [formData, setFormData] = useState({
     name: product?.name || '',
     description: product?.description || '',
     price: product?.price?.toString() || '',
     stock_quantity: product?.stock_quantity?.toString() || '',
+    category_id: product?.category_id || '',
     image_url: product?.image_url || '',
   });
+
+  useEffect(() => {
+    const loadCategories = async () => {
+      if (!tenant?.id) return;
+      try {
+        const data = await categoryService.getAllCategories(tenant.id);
+        setCategories(data);
+      } catch (error) {
+        console.error('Error loading categories:', error);
+      }
+    };
+    loadCategories();
+  }, [tenant?.id]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(product?.image_url || null);
@@ -84,6 +102,10 @@ export const ProductForm = ({ product, onClose, onSuccess }: ProductFormProps) =
     e.preventDefault();
 
     if (!validateForm()) return;
+    if (!tenant?.id) {
+      setErrors({ ...errors, submit: 'Tenant não identificado' });
+      return;
+    }
 
     setLoading(true);
     try {
@@ -92,11 +114,13 @@ export const ProductForm = ({ product, onClose, onSuccess }: ProductFormProps) =
         description: formData.description.trim(),
         price: parseFloat(formData.price),
         stock_quantity: parseInt(formData.stock_quantity),
+        category_id: formData.category_id || null,
         image_url: formData.image_url || null,
+        tenant_id: tenant.id,
       };
 
       if (product) {
-        await productService.updateProduct(product.id, productData);
+        await productService.updateProduct(product.id, productData, tenant.id);
       } else {
         await productService.createProduct(productData);
       }
@@ -199,6 +223,27 @@ export const ProductForm = ({ product, onClose, onSuccess }: ProductFormProps) =
                 rows={3}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
+            </div>
+
+            {/* Category */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Categoria
+              </label>
+              <select
+                value={formData.category_id}
+                onChange={(e) =>
+                  setFormData({ ...formData, category_id: e.target.value })
+                }
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Sem categoria</option>
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
             </div>
 
             {/* Price */}
