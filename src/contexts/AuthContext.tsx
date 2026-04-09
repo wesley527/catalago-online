@@ -64,26 +64,43 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, []);
 
-  const login = async (email: string, password: string) => {
-    setError(null);
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+const login = async (email: string, password: string) => {
+  setError(null);
+  try {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
 
-      if (error) throw error;
+    if (error) throw error;
 
-      setIsAuthenticated(true);
-      setUserId(data.user.id);
-      const userTenantId = data.user.user_metadata?.tenant_id;
-      setTenantId(userTenantId || null);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Erro ao fazer login';
-      setError(message);
-      throw err;
+    // DEBUG: valores do user_metadata
+    console.log('user_metadata.tenant_id:', data.user?.user_metadata?.tenant_id);
+
+    // DEBUG: valores do JWT (claims reais)
+    const { data: sessionData } = await supabase.auth.getSession();
+    const jwt = sessionData.session?.access_token;
+
+    if (jwt) {
+      const payload = JSON.parse(atob(jwt.split('.')[1]));
+      console.log('jwt payload.tenant_id:', payload?.tenant_id);
+      console.log('jwt payload.user_metadata.tenant_id:', payload?.user_metadata?.tenant_id);
+      console.log('jwt payload:', payload);
+    } else {
+      console.log('Sem access_token no session após login.');
     }
-  };
+
+    setIsAuthenticated(true);
+    setUserId(data.user.id);
+
+    const userTenantId = data.user.user_metadata?.tenant_id;
+    setTenantId(userTenantId || null);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Erro ao fazer login';
+    setError(message);
+    throw err;
+  }
+};
 
   const signup = async (email: string, password: string, tenantName: string, tenantSlug: string) => {
     setError(null);

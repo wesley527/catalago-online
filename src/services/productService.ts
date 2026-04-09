@@ -57,21 +57,25 @@ export const productService = {
     return data;
   },
 
-  async updateProduct(id: string, updates: Partial<Product>, tenantId?: string): Promise<Product> {
-    let query = supabase
-      .from('products')
-      .update({ ...updates, updated_at: new Date().toISOString() })
-      .eq('id', id);
+ async updateProduct(id: string, updates: Partial<Product>): Promise<Product> {
+  const { data, error } = await supabase
+    .from('products')
+    .update(updates)
+    .eq('id', id)
+    .select()
+    .maybeSingle();
 
-    if (tenantId) {
-      query = query.eq('tenant_id', tenantId);
-    }
+  if (error) {
+    console.error('UPDATE PRODUCT ERROR:', error);
+    throw error;
+  }
 
-    const { data, error } = await query.select().single();
+  if (!data) {
+    throw new Error('Product not found or access denied');
+  }
 
-    if (error) throw error;
-    return data;
-  },
+  return data;
+},
 
   async deleteProduct(id: string, tenantId?: string): Promise<void> {
     let query = supabase.from('products').delete().eq('id', id);
