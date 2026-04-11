@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import { ensureAuthSessionForWrite } from '../lib/supabaseAuth';
 import { Neighborhood } from '../lib/types';
 
 export const neighborhoodService = {
@@ -18,6 +19,7 @@ export const neighborhoodService = {
     price: number,
     tenantId: string
   ): Promise<Neighborhood> {
+    await ensureAuthSessionForWrite();
     const { data, error } = await supabase
       .from('neighborhoods')
       .insert([{ name: name.trim(), price, tenant_id: tenantId }])
@@ -29,6 +31,7 @@ export const neighborhoodService = {
   },
 
   async updateNeighborhood(id: string, name: string, price: number): Promise<Neighborhood> {
+    await ensureAuthSessionForWrite();
     const { data, error } = await supabase
       .from('neighborhoods')
       .update({ name: name.trim(), price, updated_at: new Date().toISOString() })
@@ -41,6 +44,7 @@ export const neighborhoodService = {
   },
 
   async deleteNeighborhood(id: string): Promise<void> {
+    await ensureAuthSessionForWrite();
     const { error } = await supabase.from('neighborhoods').delete().eq('id', id);
 
     if (error) throw error;

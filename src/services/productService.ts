@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import { ensureAuthSessionForWrite } from '../lib/supabaseAuth';
 import { Product } from '../lib/types';
 
 export const productService = {
@@ -47,6 +48,7 @@ export const productService = {
   },
 
   async createProduct(product: Omit<Product, 'id' | 'created_at' | 'updated_at'>): Promise<Product> {
+    await ensureAuthSessionForWrite();
     const { data, error } = await supabase
       .from('products')
       .insert([product])
@@ -78,6 +80,7 @@ export const productService = {
 },
 
   async deleteProduct(id: string, tenantId?: string): Promise<void> {
+    await ensureAuthSessionForWrite();
     let query = supabase.from('products').delete().eq('id', id);
 
     if (tenantId) {

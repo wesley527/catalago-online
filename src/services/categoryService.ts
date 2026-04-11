@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import { ensureAuthSessionForWrite } from '../lib/supabaseAuth';
 import { Category } from '../lib/types';
 
 export const categoryService = {
@@ -25,6 +26,7 @@ export const categoryService = {
   },
 
   async createCategory(name: string, tenantId: string): Promise<Category> {
+    await ensureAuthSessionForWrite();
     const { data, error } = await supabase
       .from('categories')
       .insert([{ name, tenant_id: tenantId }])
@@ -36,6 +38,7 @@ export const categoryService = {
   },
 
   async updateCategory(id: string, name: string): Promise<Category> {
+    await ensureAuthSessionForWrite();
     const { data, error } = await supabase
       .from('categories')
       .update({ name })
@@ -48,6 +51,7 @@ export const categoryService = {
   },
 
   async deleteCategory(id: string): Promise<void> {
+    await ensureAuthSessionForWrite();
     const { error } = await supabase.from('categories').delete().eq('id', id);
 
     if (error) throw error;

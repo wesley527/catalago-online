@@ -138,8 +138,7 @@ CREATE POLICY "Users can delete own tenant categories"
   USING (tenant_id = (auth.jwt() -> 'user_metadata' ->> 'tenant_id')::uuid);
 
 CREATE POLICY "Public can read all categories"
-  ON categories FOR SELECT TO anon
-  USING (true);
+  ON categories FOR SELECT USING (true);
 
 -- ========== NEIGHBORHOODS (bairros) ==========
 CREATE TABLE neighborhoods (
@@ -174,8 +173,7 @@ CREATE POLICY "Users can delete own tenant neighborhoods"
   USING (tenant_id = (auth.jwt() -> 'user_metadata' ->> 'tenant_id')::uuid);
 
 CREATE POLICY "Public can read all neighborhoods"
-  ON neighborhoods FOR SELECT TO anon
-  USING (true);
+  ON neighborhoods FOR SELECT USING (true);
 
 -- ========== PRODUCTS ==========
 CREATE TABLE products (
@@ -214,8 +212,7 @@ CREATE POLICY "Users can delete own tenant products"
   USING (tenant_id = (auth.jwt() -> 'user_metadata' ->> 'tenant_id')::uuid);
 
 CREATE POLICY "Public can read all products"
-  ON products FOR SELECT TO anon
-  USING (true);
+  ON products FOR SELECT USING (true);
 
 -- ========== ORDERS ==========
 CREATE TABLE orders (
@@ -359,8 +356,7 @@ CREATE POLICY "Users can update own tenant settings"
   WITH CHECK (tenant_id = (auth.jwt() -> 'user_metadata' ->> 'tenant_id')::uuid);
 
 CREATE POLICY "Public can read all tenant settings"
-  ON tenant_settings FOR SELECT TO anon
-  USING (true);
+  ON tenant_settings FOR SELECT USING (true);
 
 -- createDefaultSettings() roda logo após INSERT em tenants, ainda como anon
 CREATE POLICY "Anon can insert default tenant settings for signup"

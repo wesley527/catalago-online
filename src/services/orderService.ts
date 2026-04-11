@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import { ensureAuthSessionForWrite } from '../lib/supabaseAuth';
 import { DeliveryType, Order, OrderItem } from '../lib/types';
 
 export type CreateOrderInput = {
@@ -124,6 +125,7 @@ export const orderService = {
   },
 
   async updateOrderStatus(id: string, status: string, tenantId?: string): Promise<void> {
+    await ensureAuthSessionForWrite();
     let query = supabase.from('orders').update({ status }).eq('id', id);
 
     if (tenantId) {
@@ -136,6 +138,7 @@ export const orderService = {
   },
 
   async deleteAllOrdersForTenant(tenantId: string): Promise<void> {
+    await ensureAuthSessionForWrite();
     const { error } = await supabase.from('orders').delete().eq('tenant_id', tenantId);
 
     if (error) throw error;

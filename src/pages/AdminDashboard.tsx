@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
 import { LogOut, Package, ShoppingBag, Tag, MapPin } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTenant } from '../contexts/TenantContext';
@@ -15,6 +16,10 @@ export const AdminDashboard = () => {
   const { logout } = useAuth();
   const { tenant } = useTenant();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    void supabase.auth.refreshSession();
+  }, []);
 
   const handleLogout = async () => {
     try {
