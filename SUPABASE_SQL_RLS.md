@@ -1,5 +1,7 @@
 # Supabase: SQL e RLS (bairros, entrega e zerar pedidos)
 
+Para **apagar tudo no Supabase e recriar o schema completo do zero** (incluindo Storage), use o guia consolidado [`SUPABASE_SQL_COMPLETO.md`](./SUPABASE_SQL_COMPLETO.md).
+
 Este documento descreve o que foi adicionado ao banco para **cadastro de bairros com taxa**, **dados de entrega nos pedidos** e **exclusão em massa de pedidos** pelo painel autenticado.
 
 ## Pré-requisitos

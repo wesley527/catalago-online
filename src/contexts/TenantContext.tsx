@@ -37,6 +37,17 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
       }
     }
 
+    const defaultSlug = import.meta.env.VITE_DEFAULT_TENANT_SLUG as string | undefined;
+    if (defaultSlug?.trim()) {
+      try {
+        const tenantData = await tenantService.getTenantBySlug(defaultSlug.trim());
+        return tenantData?.id || null;
+      } catch (err) {
+        console.error('Error fetching tenant by VITE_DEFAULT_TENANT_SLUG:', err);
+        return null;
+      }
+    }
+
     return null;
   };
 
