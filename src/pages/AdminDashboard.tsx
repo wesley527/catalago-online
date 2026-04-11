@@ -1,14 +1,14 @@
 import { useState } from 'react';
-import { LogOut, Package, ShoppingBag, Tag, Settings } from 'lucide-react';
+import { LogOut, Package, ShoppingBag, Tag, MapPin } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTenant } from '../contexts/TenantContext';
 import { useNavigate } from 'react-router-dom';
 import { ProductManagement } from '../components/admin/ProductManagement';
 import { OrderManagement } from '../components/admin/OrderManagement';
 import { CategoryManagement } from '../components/admin/CategoryManagement';
-import { TenantSettings } from '../components/admin/TenantSettings';
+import { NeighborhoodManagement } from '../components/admin/NeighborhoodManagement';
 
-type TabType = 'products' | 'orders' | 'categories' | 'settings';
+type TabType = 'products' | 'orders' | 'categories' | 'neighborhoods';
 
 export const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState<TabType>('products');
@@ -48,7 +48,7 @@ export const AdminDashboard = () => {
       </header>
 
       <div className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex gap-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex gap-8 flex-wrap">
           <button
             onClick={() => setActiveTab('products')}
             className={`py-4 px-2 font-medium border-b-2 transition-colors ${
@@ -76,6 +76,19 @@ export const AdminDashboard = () => {
             </div>
           </button>
           <button
+            onClick={() => setActiveTab('neighborhoods')}
+            className={`py-4 px-2 font-medium border-b-2 transition-colors ${
+              activeTab === 'neighborhoods'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <MapPin className="w-5 h-5" />
+              Bairros
+            </div>
+          </button>
+          <button
             onClick={() => setActiveTab('orders')}
             className={`py-4 px-2 font-medium border-b-2 transition-colors ${
               activeTab === 'orders'
@@ -88,27 +101,14 @@ export const AdminDashboard = () => {
               Pedidos
             </div>
           </button>
-          <button
-            onClick={() => setActiveTab('settings')}
-            className={`py-4 px-2 font-medium border-b-2 transition-colors ${
-              activeTab === 'settings'
-                ? 'border-blue-600 text-blue-600'
-                : 'border-transparent text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            <div className="flex items-center gap-2">
-              <Settings className="w-5 h-5" />
-              Configurações
-            </div>
-          </button>
         </div>
       </div>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {activeTab === 'products' && <ProductManagement />}
         {activeTab === 'categories' && <CategoryManagement />}
+        {activeTab === 'neighborhoods' && <NeighborhoodManagement />}
         {activeTab === 'orders' && <OrderManagement />}
-        {activeTab === 'settings' && <TenantSettings />}
       </main>
     </div>
   );

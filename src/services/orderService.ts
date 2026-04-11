@@ -1,24 +1,34 @@
 import { supabase } from '../lib/supabase';
-import { Order, OrderItem } from '../lib/types';
+import { DeliveryType, Order, OrderItem } from '../lib/types';
+
+export type CreateOrderInput = {
+  customerName: string;
+  customerPhone: string;
+  customerAddress: string;
+  totalAmount: number;
+  tenantId: string;
+  deliveryType: DeliveryType;
+  deliveryFee: number;
+  neighborhoodId: string | null;
+  neighborhoodName: string | null;
+};
 
 export const orderService = {
-  async createOrder(
-    customerName: string,
-    customerPhone: string,
-    customerAddress: string,
-    totalAmount: number,
-    tenantId: string
-  ): Promise<Order> {
+  async createOrder(input: CreateOrderInput): Promise<Order> {
     const { data, error } = await supabase
       .from('orders')
       .insert([
         {
-          customer_name: customerName,
-          customer_phone: customerPhone,
-          customer_address: customerAddress,
-          total_amount: totalAmount,
-          tenant_id: tenantId,
+          customer_name: input.customerName,
+          customer_phone: input.customerPhone,
+          customer_address: input.customerAddress,
+          total_amount: input.totalAmount,
+          tenant_id: input.tenantId,
           status: 'pending',
+          delivery_type: input.deliveryType,
+          delivery_fee: input.deliveryFee,
+          neighborhood_id: input.neighborhoodId,
+          neighborhood_name: input.neighborhoodName,
         },
       ])
       .select()
@@ -121,6 +131,12 @@ export const orderService = {
     }
 
     const { error } = await query;
+
+    if (error) throw error;
+  },
+
+  async deleteAllOrdersForTenant(tenantId: string): Promise<void> {
+    const { error } = await supabase.from('orders').delete().eq('tenant_id', tenantId);
 
     if (error) throw error;
   },

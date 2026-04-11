@@ -15,18 +15,26 @@ export const generateWhatsAppLink = (
   customerName: string,
   items: Array<{ name: string; quantity: number; price: number }>,
   total: number,
-  address: string
+  address: string,
+  options?: { deliveryInfo?: string; subtotal?: number }
 ): string => {
   const cleanPhone = phone.replace(/\D/g, '');
 
   let message = `Olá! Confirmo meu pedido:\n\n`;
   message += `*Cliente:* ${customerName}\n`;
-  message += `*Endereço:* ${address}\n\n`;
-  message += `*Produtos:*\n`;
+  message += `*Endereço / entrega:* ${address}\n`;
+  if (options?.deliveryInfo) {
+    message += `${options.deliveryInfo}\n`;
+  }
+  message += `\n*Produtos:*\n`;
 
   items.forEach((item) => {
     message += `• ${item.name} - ${item.quantity}x ${formatCurrency(item.price)}\n`;
   });
+
+  if (options?.subtotal !== undefined && options.subtotal !== total) {
+    message += `\n*Subtotal produtos:* ${formatCurrency(options.subtotal)}`;
+  }
 
   message += `\n*Total:* ${formatCurrency(total)}`;
 

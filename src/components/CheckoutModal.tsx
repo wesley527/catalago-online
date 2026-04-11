@@ -1,11 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { X } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
 import { useTenant } from '../contexts/TenantContext';
 import { generateWhatsAppLink, formatCurrency } from '../lib/utils';
 import { orderService } from '../services/orderService';
 import { productService } from '../services/productService';
-import { CheckoutData } from '../lib/types';
+import { neighborhoodService } from '../services/neighborhoodService';
+import { CheckoutData, DeliveryType, Neighborhood } from '../lib/types';
 
 interface CheckoutModalProps {
   isOpen: boolean;
@@ -21,8 +22,46 @@ export const CheckoutModal = ({ isOpen, onClose, onSuccess }: CheckoutModalProps
     customer_phone: '',
     customer_address: '',
   });
+  const [deliveryType, setDeliveryType] = useState<DeliveryType>('pickup');
+  const [neighborhoods, setNeighborhoods] = useState<Neighborhood[]>([]);
+  const [selectedNeighborhoodId, setSelectedNeighborhoodId] = useState('');
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (!isOpen || !tenant?.id) return;
+
+    setFormData({ customer_name: '', customer_phone: '', customer_address: '' });
+    setDeliveryType('pickup');
+    setSelectedNeighborhoodId('');
+    setErrors({});
+
+    let cancelled = false;
+    neighborhoodService
+      .getAllByTenant(tenant.id)
+      .then((data) => {
+        if (!cancelled) setNeighborhoods(data);
+      })
+      .catch(() => {
+        if (!cancelled) setNeighborhoods([]);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, tenant?.id]);
+
+  const subtotal = getTotal();
+
+  const selectedNeighborhood = useMemo(
+    () => neighborhoods.find((n) => n.id === selectedNeighborhoodId) ?? null,
+    [neighborhoods, selectedNeighborhoodId]
+  );
+
+  const deliveryFee =
+    deliveryType === 'delivery' && selectedNeighborhood ? selectedNeighborhood.price : 0;
+
+  const grandTotal = subtotal + deliveryFee;
 
   if (!isOpen) return null;
 
@@ -37,8 +76,17 @@ export const CheckoutModal = ({ isOpen, onClose, onSuccess }: CheckoutModalProps
     } else if (!/^[0-9\s\-\(\)]+$/.test(formData.customer_phone)) {
       newErrors.customer_phone = 'Telefone inválido';
     }
-    if (!formData.customer_address.trim()) {
-      newErrors.customer_address = 'Endereço é obrigatório';
+
+    if (deliveryType === 'delivery') {
+      if (neighborhoods.length === 0) {
+        newErrors.delivery =
+          'Não há bairros cadastrados. Use retirada ou cadastre bairros no painel administrativo.';
+      } else if (!selectedNeighborhoodId) {
+        newErrors.delivery = 'Selecione o bairro de entrega';
+      }
+      if (!formData.customer_address.trim()) {
+        newErrors.customer_address = 'Endereço completo é obrigatório para entrega';
+      }
     }
 
     setErrors(newErrors);
@@ -55,20 +103,30 @@ export const CheckoutModal = ({ isOpen, onClose, onSuccess }: CheckoutModalProps
       return;
     }
 
+    const addressForOrder =
+      deliveryType === 'pickup'
+        ? formData.customer_address.trim() || 'Retirada na loja'
+        : formData.customer_address.trim();
+
+    const neighborhoodId =
+      deliveryType === 'delivery' && selectedNeighborhood ? selectedNeighborhood.id : null;
+    const neighborhoodName =
+      deliveryType === 'delivery' && selectedNeighborhood ? selectedNeighborhood.name : null;
+
     setLoading(true);
     try {
-      const total = getTotal();
+      const order = await orderService.createOrder({
+        customerName: formData.customer_name,
+        customerPhone: formData.customer_phone,
+        customerAddress: addressForOrder,
+        totalAmount: grandTotal,
+        tenantId: tenant.id,
+        deliveryType,
+        deliveryFee,
+        neighborhoodId,
+        neighborhoodName,
+      });
 
-      // Create order
-      const order = await orderService.createOrder(
-        formData.customer_name,
-        formData.customer_phone,
-        formData.customer_address,
-        total,
-        tenant.id
-      );
-
-      // Create order items
       const orderItems = items.map((item) => ({
         product_id: item.product.id,
         quantity: item.quantity,
@@ -77,35 +135,41 @@ export const CheckoutModal = ({ isOpen, onClose, onSuccess }: CheckoutModalProps
 
       await orderService.createOrderItems(order.id, orderItems);
 
-      // Update stock
       for (const item of items) {
         const newStock = item.product.stock_quantity - item.quantity;
         await productService.updateStock(item.product.id, newStock);
       }
 
-      // Generate WhatsApp link
       const whatsappItems = items.map((item) => ({
         name: item.product.name,
         quantity: item.quantity,
         price: item.product.price,
       }));
 
+      let deliveryInfo = '';
+      if (deliveryType === 'pickup') {
+        deliveryInfo = '*Tipo:* Retirada na loja';
+      } else if (selectedNeighborhood) {
+        deliveryInfo = `*Tipo:* Entrega — *Bairro:* ${selectedNeighborhood.name} — *Taxa:* ${formatCurrency(deliveryFee)}`;
+      }
+
       const whatsappLink = generateWhatsAppLink(
         formData.customer_phone,
         formData.customer_name,
         whatsappItems,
-        total,
-        formData.customer_address
+        grandTotal,
+        addressForOrder,
+        {
+          deliveryInfo,
+          subtotal: deliveryFee > 0 ? subtotal : undefined,
+        }
       );
 
-      // Clear cart
       clearCart();
 
-      // Close modal and show success
       onSuccess();
       onClose();
 
-      // Redirect to WhatsApp
       setTimeout(() => {
         window.open(whatsappLink, '_blank');
       }, 500);
@@ -117,7 +181,7 @@ export const CheckoutModal = ({ isOpen, onClose, onSuccess }: CheckoutModalProps
     }
   };
 
-  const total = getTotal();
+  const canChooseDelivery = neighborhoods.length > 0;
 
   return (
     <>
@@ -133,7 +197,6 @@ export const CheckoutModal = ({ isOpen, onClose, onSuccess }: CheckoutModalProps
           </div>
 
           <form onSubmit={handleSubmit} className="p-6 space-y-4">
-            {/* Order Summary */}
             <div className="bg-gray-50 rounded-lg p-4 mb-6">
               <h3 className="font-semibold text-gray-900 mb-3">Resumo do Pedido</h3>
               <div className="space-y-2 mb-3">
@@ -146,15 +209,86 @@ export const CheckoutModal = ({ isOpen, onClose, onSuccess }: CheckoutModalProps
                   </div>
                 ))}
               </div>
-              <div className="border-t pt-2 flex justify-between font-bold text-blue-600">
+              <div className="border-t pt-2 space-y-1 text-sm text-gray-700">
+                <div className="flex justify-between">
+                  <span>Subtotal:</span>
+                  <span>{formatCurrency(subtotal)}</span>
+                </div>
+                {deliveryFee > 0 && (
+                  <div className="flex justify-between text-gray-600">
+                    <span>Taxa de entrega:</span>
+                    <span>{formatCurrency(deliveryFee)}</span>
+                  </div>
+                )}
+              </div>
+              <div className="border-t pt-2 mt-2 flex justify-between font-bold text-blue-600">
                 <span>Total:</span>
-                <span>{formatCurrency(total)}</span>
+                <span>{formatCurrency(grandTotal)}</span>
               </div>
             </div>
 
-            {/* Form Fields */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Nome Completo</label>
+              <span className="block text-sm font-medium text-gray-700 mb-2">Como receber</span>
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="delivery"
+                    checked={deliveryType === 'pickup'}
+                    onChange={() => {
+                      setDeliveryType('pickup');
+                      setSelectedNeighborhoodId('');
+                    }}
+                    className="text-blue-600 focus:ring-blue-500"
+                  />
+                  <span>Retirada na loja (sem taxa de entrega)</span>
+                </label>
+                <label
+                  className={`flex items-center gap-2 ${canChooseDelivery ? 'cursor-pointer' : 'opacity-50 cursor-not-allowed'}`}
+                >
+                  <input
+                    type="radio"
+                    name="delivery"
+                    checked={deliveryType === 'delivery'}
+                    disabled={!canChooseDelivery}
+                    onChange={() => setDeliveryType('delivery')}
+                    className="text-blue-600 focus:ring-blue-500"
+                  />
+                  <span>Entrega em bairro (taxa conforme cadastro)</span>
+                </label>
+              </div>
+              {!canChooseDelivery && (
+                <p className="text-xs text-amber-700 mt-2">
+                  Para habilitar entrega por bairro, cadastre bairros no painel administrativo.
+                </p>
+              )}
+            </div>
+
+            {deliveryType === 'delivery' && canChooseDelivery && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Bairro</label>
+                <select
+                  value={selectedNeighborhoodId}
+                  onChange={(e) => setSelectedNeighborhoodId(e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    errors.delivery ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                >
+                  <option value="">Selecione o bairro</option>
+                  {neighborhoods.map((n) => (
+                    <option key={n.id} value={n.id}>
+                      {n.name} — {formatCurrency(n.price)}
+                    </option>
+                  ))}
+                </select>
+                {errors.delivery && (
+                  <p className="text-red-600 text-sm mt-1">{errors.delivery}</p>
+                )}
+              </div>
+            )}
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Nome completo</label>
               <input
                 type="text"
                 value={formData.customer_name}
@@ -189,13 +323,22 @@ export const CheckoutModal = ({ isOpen, onClose, onSuccess }: CheckoutModalProps
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Endereço</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                {deliveryType === 'pickup'
+                  ? 'Observações (opcional)'
+                  : 'Endereço completo para entrega'}
+              </label>
               <textarea
                 value={formData.customer_address}
                 onChange={(e) =>
                   setFormData({ ...formData, customer_address: e.target.value })
                 }
                 rows={3}
+                placeholder={
+                  deliveryType === 'pickup'
+                    ? 'Ex.: horário preferido para retirada'
+                    : 'Rua, número, complemento, ponto de referência...'
+                }
                 className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                   errors.customer_address ? 'border-red-500' : 'border-gray-300'
                 }`}

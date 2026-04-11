@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ChevronDown, AlertCircle } from 'lucide-react';
+import { ChevronDown, AlertCircle, Trash2 } from 'lucide-react';
 import { useTenant } from '../../contexts/TenantContext';
 import { orderService } from '../../services/orderService';
 import { formatCurrency } from '../../lib/utils';
@@ -12,6 +12,9 @@ interface OrderWithItems {
   total_amount: number;
   status: string;
   created_at: string;
+  delivery_type?: string;
+  delivery_fee?: number;
+  neighborhood_name?: string | null;
   items: any[];
 }
 
@@ -42,6 +45,36 @@ export const OrderManagement = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleClearAllOrders = async () => {
+    if (!tenant?.id) return;
+    if (
+      !window.confirm(
+        'Isso apagará todos os pedidos desta loja permanentemente. Deseja continuar?'
+      )
+    ) {
+      return;
+    }
+
+    try {
+      setError(null);
+      await orderService.deleteAllOrdersForTenant(tenant.id);
+      setOrders([]);
+      setExpandedOrderId(null);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Erro ao zerar pedidos';
+      setError(message);
+    }
+  };
+
+  const deliveryLabel = (order: OrderWithItems) => {
+    if (order.delivery_type === 'pickup') {
+      return 'Retirada na loja';
+    }
+    const fee = order.delivery_fee ?? 0;
+    const name = order.neighborhood_name || '—';
+    return `Entrega — ${name}${fee > 0 ? ` (${formatCurrency(fee)})` : ''}`;
   };
 
   const handleStatusChange = async (orderId: string, newStatus: string) => {
@@ -87,7 +120,19 @@ export const OrderManagement = () => {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-900">Gerenciar Pedidos</h2>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <h2 className="text-2xl font-bold text-gray-900">Gerenciar Pedidos</h2>
+        {!loading && orders.length > 0 && (
+          <button
+            type="button"
+            onClick={handleClearAllOrders}
+            className="inline-flex items-center justify-center gap-2 px-4 py-2 border border-red-300 text-red-700 bg-red-50 hover:bg-red-100 rounded-lg font-medium transition-colors"
+          >
+            <Trash2 className="w-5 h-5" />
+            Zerar todos os pedidos
+          </button>
+        )}
+      </div>
 
       {error && (
         <div className="flex items-center gap-3 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
@@ -175,7 +220,8 @@ export const OrderManagement = () => {
                           {formatPhone(order.customer_phone)}
                         </a>
                       </p>
-                      <p><strong>Endereço:</strong> {order.customer_address}</p>
+                      <p><strong>Endereço / observações:</strong> {order.customer_address}</p>
+                      <p><strong>Entrega:</strong> {deliveryLabel(order)}</p>
                     </div>
                   </div>
 

@@ -47,6 +47,17 @@ export interface Product {
   updated_at: string;
 }
 
+export type DeliveryType = 'pickup' | 'delivery';
+
+export interface Neighborhood {
+  id: string;
+  tenant_id: string;
+  name: string;
+  price: number;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Order {
   id: string;
   customer_name: string;
@@ -55,6 +66,10 @@ export interface Order {
   total_amount: number;
   status: string;
   tenant_id: string;
+  delivery_type: DeliveryType;
+  delivery_fee: number;
+  neighborhood_id: string | null;
+  neighborhood_name: string | null;
   created_at: string;
 }
 
