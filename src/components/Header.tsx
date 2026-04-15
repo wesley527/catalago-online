@@ -23,7 +23,7 @@ export const Header = ({ onCartClick }: HeaderProps) => {
             <Store className="w-8 h-8 text-blue-600" />
           )}
           <h1 className="text-2xl font-bold text-gray-900">
-            {tenant?.name || 'CatalogHub'}
+            {tenant?.name || 'Super Sexy - Magazine'}
           </h1>
         </div>
 
