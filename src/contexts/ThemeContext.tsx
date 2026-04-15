@@ -13,7 +13,7 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
   const { tenantSettings } = useTenant();
 
-  const primaryColor = tenantSettings?.primary_color || '#2563eb';
+  const primaryColor = tenantSettings?.primary_color || '#BA7E2F';
   const secondaryColor = tenantSettings?.secondary_color || '#10b981';
   const logoUrl = tenantSettings?.logo_url || null;
   const bannerUrl = tenantSettings?.banner_url || null;

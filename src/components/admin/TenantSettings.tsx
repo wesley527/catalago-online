@@ -6,7 +6,7 @@ import { supabase } from '../../lib/supabase';
 export const TenantSettings = () => {
   const { tenant, tenantSettings, updateSettings, refreshSettings } = useTenant();
   const [formData, setFormData] = useState({
-    primary_color: '#2563eb',
+    primary_color: '#BA7E2F',
     secondary_color: '#10b981',
     logo_url: '',
     banner_url: '',
