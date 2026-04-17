@@ -24,7 +24,23 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       return;
     }
 
+<<<<<<< HEAD
     setLoading(true);
+=======
+    const defaultSlug = import.meta.env.VITE_DEFAULT_TENANT_SLUG as string | undefined;
+    if (defaultSlug?.trim()) {
+      try {
+        const tenantData = await tenantService.getTenantBySlug(defaultSlug.trim());
+        return tenantData?.id || null;
+      } catch (err) {
+        console.error('Error fetching tenant by VITE_DEFAULT_TENANT_SLUG:', err);
+        return null;
+      }
+    }
+
+    return null;
+  };
+>>>>>>> adf068e03d9f7e7f77d8837055e3a6a822dc94c6
 
     try {
       const tenantData = await tenantService.getTenantById(tenantId);

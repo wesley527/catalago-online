@@ -1,5 +1,10 @@
 import { supabase } from '../lib/supabase';
+<<<<<<< HEAD
 import type { Category } from '../lib/types';
+=======
+import { ensureAuthSessionForWrite } from '../lib/supabaseAuth';
+import { Category } from '../lib/types';
+>>>>>>> adf068e03d9f7e7f77d8837055e3a6a822dc94c6
 
 export async function getCategories(tenantId: string): Promise<Category[]> {
   try {
@@ -34,8 +39,13 @@ export async function getCategoryById(id: string): Promise<Category | null> {
   }
 }
 
+<<<<<<< HEAD
 export async function createCategory(category: Omit<Category, 'id' | 'created_at' | 'updated_at'>): Promise<Category> {
   try {
+=======
+  async createCategory(name: string, tenantId: string): Promise<Category> {
+    await ensureAuthSessionForWrite();
+>>>>>>> adf068e03d9f7e7f77d8837055e3a6a822dc94c6
     const { data, error } = await supabase
       .from('categories')
       .insert([category])
@@ -49,8 +59,13 @@ export async function createCategory(category: Omit<Category, 'id' | 'created_at
   }
 }
 
+<<<<<<< HEAD
 export async function updateCategory(id: string, updates: Partial<Category>): Promise<Category> {
   try {
+=======
+  async updateCategory(id: string, name: string): Promise<Category> {
+    await ensureAuthSessionForWrite();
+>>>>>>> adf068e03d9f7e7f77d8837055e3a6a822dc94c6
     const { data, error } = await supabase
       .from('categories')
       .update(updates)
@@ -65,12 +80,18 @@ export async function updateCategory(id: string, updates: Partial<Category>): Pr
   }
 }
 
+<<<<<<< HEAD
 export async function deleteCategory(id: string): Promise<void> {
   try {
     const { error } = await supabase
       .from('categories')
       .delete()
       .eq('id', id);
+=======
+  async deleteCategory(id: string): Promise<void> {
+    await ensureAuthSessionForWrite();
+    const { error } = await supabase.from('categories').delete().eq('id', id);
+>>>>>>> adf068e03d9f7e7f77d8837055e3a6a822dc94c6
 
     if (error) throw error;
   } catch (error) {

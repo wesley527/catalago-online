@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import React, { useState } from 'react';
 import { LogOut, Menu, X, BarChart3, Package, Truck, Settings, List } from 'lucide-react';
 import { supabase } from '../lib/supabase';
@@ -11,12 +12,30 @@ import TenantSettings from '../components/admin/TenantSettings';
 import '../index.css';
 
 type TabType = 'products' | 'categories' | 'orders' | 'delivery' | 'settings';
+=======
+import { useState, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
+import { LogOut, Package, ShoppingBag, Tag, MapPin } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+import { useTenant } from '../contexts/TenantContext';
+import { useNavigate } from 'react-router-dom';
+import { ProductManagement } from '../components/admin/ProductManagement';
+import { OrderManagement } from '../components/admin/OrderManagement';
+import { CategoryManagement } from '../components/admin/CategoryManagement';
+import { NeighborhoodManagement } from '../components/admin/NeighborhoodManagement';
+
+type TabType = 'products' | 'orders' | 'categories' | 'neighborhoods';
+>>>>>>> adf068e03d9f7e7f77d8837055e3a6a822dc94c6
 
 export default function AdminDashboard() {
   const { user, logout } = useAuth();
   const { tenant } = useTenant();
   const [activeTab, setActiveTab] = useState<TabType>('products');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    void supabase.auth.refreshSession();
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -43,6 +62,7 @@ export default function AdminDashboard() {
     );
   }
 
+<<<<<<< HEAD
   const tabs = [
     { id: 'products' as TabType, label: 'Produtos', icon: Package },
     { id: 'categories' as TabType, label: 'Categorias', icon: List },
@@ -85,6 +105,47 @@ export default function AdminDashboard() {
             <div className="text-right">
               <p className="text-sm font-medium text-gray-900 dark:text-white">{user?.email}</p>
               <p className="text-xs text-gray-600 dark:text-gray-400">Plano {tenant.plan}</p>
+=======
+      <div className="bg-white border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex gap-8 flex-wrap">
+          <button
+            onClick={() => setActiveTab('products')}
+            className={`py-4 px-2 font-medium border-b-2 transition-colors ${
+              activeTab === 'products'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <Package className="w-5 h-5" />
+              Produtos
+            </div>
+          </button>
+          <button
+            onClick={() => setActiveTab('categories')}
+            className={`py-4 px-2 font-medium border-b-2 transition-colors ${
+              activeTab === 'categories'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <Tag className="w-5 h-5" />
+              Categorias
+            </div>
+          </button>
+          <button
+            onClick={() => setActiveTab('neighborhoods')}
+            className={`py-4 px-2 font-medium border-b-2 transition-colors ${
+              activeTab === 'neighborhoods'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <MapPin className="w-5 h-5" />
+              Bairros
+>>>>>>> adf068e03d9f7e7f77d8837055e3a6a822dc94c6
             </div>
             <button
               onClick={handleLogout}
@@ -97,13 +158,28 @@ export default function AdminDashboard() {
 
           {/* Mobile menu button */}
           <button
+<<<<<<< HEAD
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="md:hidden p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
           >
             {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+=======
+            onClick={() => setActiveTab('orders')}
+            className={`py-4 px-2 font-medium border-b-2 transition-colors ${
+              activeTab === 'orders'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <ShoppingBag className="w-5 h-5" />
+              Pedidos
+            </div>
+>>>>>>> adf068e03d9f7e7f77d8837055e3a6a822dc94c6
           </button>
         </div>
 
+<<<<<<< HEAD
         {/* Mobile menu */}
         {mobileMenuOpen && (
           <div className="md:hidden border-t border-gray-200 dark:border-gray-700 px-4 py-4">
@@ -167,6 +243,14 @@ export default function AdminDashboard() {
         {/* Main Content */}
         <main className="flex-1 p-4 sm:p-6 lg:p-8">{renderTabContent()}</main>
       </div>
+=======
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {activeTab === 'products' && <ProductManagement />}
+        {activeTab === 'categories' && <CategoryManagement />}
+        {activeTab === 'neighborhoods' && <NeighborhoodManagement />}
+        {activeTab === 'orders' && <OrderManagement />}
+      </main>
+>>>>>>> adf068e03d9f7e7f77d8837055e3a6a822dc94c6
     </div>
   );
 }

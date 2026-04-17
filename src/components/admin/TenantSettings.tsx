@@ -9,11 +9,18 @@ export default function TenantSettings() {
   const { tenant, tenantSettings, updateSettings, refreshSettings, setTenant } = useTenant();
   const { isDark, toggleTheme, theme, setTheme } = useTheme();
   const [formData, setFormData] = useState({
+<<<<<<< HEAD
     name: tenant?.name || '',
     primary_color: tenantSettings?.primary_color || '#2563eb',
     secondary_color: tenantSettings?.secondary_color || '#10b981',
     logo_url: tenantSettings?.logo_url || '',
     banner_url: tenantSettings?.banner_url || '',
+=======
+    primary_color: '#BA7E2F',
+    secondary_color: '#10b981',
+    logo_url: '',
+    banner_url: '',
+>>>>>>> adf068e03d9f7e7f77d8837055e3a6a822dc94c6
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

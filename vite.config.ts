@@ -1,8 +1,12 @@
+<<<<<<< HEAD
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
+=======
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+>>>>>>> adf068e03d9f7e7f77d8837055e3a6a822dc94c6
 
-// https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
   resolve: {
@@ -22,4 +26,4 @@ export default defineConfig({
   define: {
     __APP_VERSION__: JSON.stringify(process.env.npm_package_version),
   },
-});
+})

@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+<<<<<<< HEAD
 import type { Order, OrderItem } from '../lib/types';
 
 export const orderService = {
@@ -12,19 +13,45 @@ export const orderService = {
     deliveryAreaId: string | null,
     deliveryFee: number
   ): Promise<Order> {
+=======
+import { ensureAuthSessionForWrite } from '../lib/supabaseAuth';
+import { DeliveryType, Order, OrderItem } from '../lib/types';
+
+export type CreateOrderInput = {
+  customerName: string;
+  customerPhone: string;
+  customerAddress: string;
+  totalAmount: number;
+  tenantId: string;
+  deliveryType: DeliveryType;
+  deliveryFee: number;
+  neighborhoodId: string | null;
+  neighborhoodName: string | null;
+};
+
+export const orderService = {
+  async createOrder(input: CreateOrderInput): Promise<Order> {
+>>>>>>> adf068e03d9f7e7f77d8837055e3a6a822dc94c6
     const { data, error } = await supabase
       .from('orders')
       .insert([
         {
-          customer_name: customerName,
-          customer_phone: customerPhone,
-          customer_address: customerAddress,
-          total_amount: totalAmount,
-          tenant_id: tenantId,
+          customer_name: input.customerName,
+          customer_phone: input.customerPhone,
+          customer_address: input.customerAddress,
+          total_amount: input.totalAmount,
+          tenant_id: input.tenantId,
           status: 'pending',
+<<<<<<< HEAD
           delivery_type: deliveryType,
           delivery_fee: deliveryFee,
           delivery_area_id: deliveryAreaId,
+=======
+          delivery_type: input.deliveryType,
+          delivery_fee: input.deliveryFee,
+          neighborhood_id: input.neighborhoodId,
+          neighborhood_name: input.neighborhoodName,
+>>>>>>> adf068e03d9f7e7f77d8837055e3a6a822dc94c6
         },
       ])
       .select()
@@ -151,17 +178,30 @@ export const orderService = {
     if (error) throw error;
   },
 
+<<<<<<< HEAD
   async deleteAllOrdersByTenant(tenantId: string): Promise<void> {
     const { data: orders } = await supabase
       .from('orders')
       .select('id')
       .eq('tenant_id', tenantId);
+=======
+  async updateOrderStatus(id: string, status: string, tenantId?: string): Promise<void> {
+    await ensureAuthSessionForWrite();
+    let query = supabase.from('orders').update({ status }).eq('id', id);
+>>>>>>> adf068e03d9f7e7f77d8837055e3a6a822dc94c6
 
     if (orders && orders.length > 0) {
       const orderIds = orders.map((o) => o.id);
       await supabase.from('order_items').delete().in('order_id', orderIds);
     }
 
+    const { error } = await supabase.from('orders').delete().eq('tenant_id', tenantId);
+
+    if (error) throw error;
+  },
+
+  async deleteAllOrdersForTenant(tenantId: string): Promise<void> {
+    await ensureAuthSessionForWrite();
     const { error } = await supabase.from('orders').delete().eq('tenant_id', tenantId);
 
     if (error) throw error;
