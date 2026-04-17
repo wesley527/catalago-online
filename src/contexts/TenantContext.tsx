@@ -1,127 +1,80 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Tenant, TenantSettings } from '../lib/types';
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import type { Tenant } from '../lib/types';
 import { tenantService } from '../services/tenantService';
 import { useAuth } from './AuthContext';
 
 interface TenantContextType {
   tenant: Tenant | null;
-  tenantSettings: TenantSettings | null;
+  tenants: Tenant[];
+  setTenant: (tenant: Tenant) => void;
   loading: boolean;
-  error: string | null;
-  refreshTenant: () => Promise<void>;
-  refreshSettings: () => Promise<void>;
-  updateSettings: (settings: Partial<TenantSettings>) => Promise<void>;
 }
 
 const TenantContext = createContext<TenantContextType | undefined>(undefined);
 
-export const TenantProvider = ({ children }: { children: ReactNode }) => {
-  const [tenant, setTenant] = useState<Tenant | null>(null);
-  const [tenantSettings, setTenantSettings] = useState<TenantSettings | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { tenantId } = useAuth();
+  const [tenant, setTenant] = useState<Tenant | null>(null);
+  const [tenants, setTenants] = useState<Tenant[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const getTenantFromHostname = async (): Promise<string | null> => {
-    const hostname = window.location.hostname;
-    const parts = hostname.split('.');
-
-    if (parts.length >= 3 && parts[0] !== 'www') {
-      const subdomain = parts[0];
-      try {
-        const tenantData = await tenantService.getTenantBySlug(subdomain);
-        return tenantData?.id || null;
-      } catch (err) {
-        console.error('Error fetching tenant by subdomain:', err);
-        return null;
-      }
+  const fetchTenant = async () => {
+    if (!tenantId) {
+      setTenant(null);
+      return;
     }
 
-    return null;
-  };
+    setLoading(true);
 
-  const loadTenant = async (id: string) => {
     try {
-      setLoading(true);
-      setError(null);
-
-      const tenantData = await tenantService.getTenantById(id);
-      if (!tenantData) {
-        throw new Error('Tenant not found');
-      }
-
+      const tenantData = await tenantService.getTenantById(tenantId);
       setTenant(tenantData);
-
-      const settings = await tenantService.getTenantSettings(id);
-      setTenantSettings(settings);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Error loading tenant';
-      setError(message);
-      console.error('Error loading tenant:', err);
+      console.error('[TenantContext] Fetch error:', err);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    const initTenant = async () => {
-      const subdomainTenantId = await getTenantFromHostname();
+    void fetchTenant();
+  }, [tenantId]);
 
-      if (subdomainTenantId) {
-        await loadTenant(subdomainTenantId);
-      } else if (tenantId) {
-        await loadTenant(tenantId);
-      } else {
+  useEffect(() => {
+    // Load default tenant if needed
+    const loadDefaultTenant = async () => {
+      try {
+        setLoading(true);
+        // This will be implemented with actual API calls
+        const defaultTenant: Tenant = {
+          id: '1',
+          name: 'Default Store',
+          slug: 'default',
+          logo_url: '',
+          color: '#FF6B35',
+          theme: 'light',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+        setTenant(defaultTenant);
+        setTenants([defaultTenant]);
+      } catch (error) {
+        console.error('Error loading tenant:', error);
+      } finally {
         setLoading(false);
       }
     };
 
-    initTenant();
-  }, [tenantId]);
+    loadDefaultTenant();
+  }, []);
 
-  const refreshTenant = async () => {
-    if (tenant?.id) {
-      await loadTenant(tenant.id);
-    }
-  };
-
-  const refreshSettings = async () => {
-    if (tenant?.id) {
-      try {
-        const settings = await tenantService.getTenantSettings(tenant.id);
-        setTenantSettings(settings);
-      } catch (err) {
-        console.error('Error refreshing settings:', err);
-      }
-    }
-  };
-
-  const updateSettings = async (settings: Partial<TenantSettings>) => {
-    if (!tenant?.id) {
-      throw new Error('No tenant loaded');
-    }
-
-    try {
-      const updated = await tenantService.updateTenantSettings(tenant.id, settings);
-      setTenantSettings(updated);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Error updating settings';
-      throw new Error(message);
-    }
+  const handleSetTenant = (newTenant: Tenant) => {
+    setTenant(newTenant);
+    localStorage.setItem('selectedTenant', JSON.stringify(newTenant));
   };
 
   return (
-    <TenantContext.Provider
-      value={{
-        tenant,
-        tenantSettings,
-        loading,
-        error,
-        refreshTenant,
-        refreshSettings,
-        updateSettings,
-      }}
-    >
+    <TenantContext.Provider value={{ tenant, tenants, setTenant: handleSetTenant, loading }}>
       {children}
     </TenantContext.Provider>
   );
@@ -129,7 +82,7 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
 
 export const useTenant = () => {
   const context = useContext(TenantContext);
-  if (!context) {
+  if (context === undefined) {
     throw new Error('useTenant must be used within TenantProvider');
   }
   return context;

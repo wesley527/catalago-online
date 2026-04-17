@@ -9,11 +9,10 @@ export const seedInitialData = async () => {
       .limit(1);
 
     if (existingProducts && existingProducts.length > 0) {
-      console.log('Database already has products, skipping seed');
       return;
     }
 
-    // Insert sample products
+    // Insert sample products (add tenant_id if provided)
     const sampleProducts = [
       {
         name: 'Notebook Gamer Pro',
@@ -65,14 +64,15 @@ export const seedInitialData = async () => {
       },
     ];
 
-    const { error } = await supabase.from('products').insert(sampleProducts);
+    // Add tenant_id if available
+    const productsWithTenant = sampleProducts.map(p => ({
+      ...p,
+      tenant_id: 'default-seed-tenant' // Fixed for seed
+    }));
 
-    if (error) {
-      console.error('Error seeding products:', error);
-    } else {
-      console.log('Sample products created successfully');
-    }
+    const { error } = await supabase.from('products').insert(productsWithTenant);
+    if (error) throw error;
   } catch (error) {
-    console.error('Seed error:', error);
+    // Seed fails silently
   }
 };

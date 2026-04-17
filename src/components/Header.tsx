@@ -1,44 +1,72 @@
-import { ShoppingCart, Store } from 'lucide-react';
-import { useCart } from '../contexts/CartContext';
-import { useTenant } from '../contexts/TenantContext';
+import React from 'react';
+import { ShoppingCart, LogIn, Menu } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 
 interface HeaderProps {
   onCartClick: () => void;
+  cartCount: number;
 }
 
-export const Header = ({ onCartClick }: HeaderProps) => {
-  const { items } = useCart();
-  const { tenant } = useTenant();
-  const { logoUrl } = useTheme();
-  const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
+export default function Header({ onCartClick, cartCount }: HeaderProps) {
+  const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login');
+  };
 
   return (
-    <header className="sticky top-0 z-40 bg-white border-b border-gray-200 shadow-sm">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
+    <header className={`${theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'} shadow-md`}>
+      <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+        {/* Logo */}
         <div className="flex items-center gap-3">
-          {logoUrl ? (
-            <img src={logoUrl} alt={tenant?.name || 'Logo'} className="h-10 w-auto object-contain" />
-          ) : (
-            <Store className="w-8 h-8 text-blue-600" />
-          )}
-          <h1 className="text-2xl font-bold text-gray-900">
-            {tenant?.name || 'CatalogHub'}
-          </h1>
+          <h1 className="text-2xl font-bold text-orange-600">🛒 Catálogo Online</h1>
         </div>
 
-        <button
-          onClick={onCartClick}
-          className="relative p-2 text-gray-600 hover:text-blue-600 transition-colors"
-        >
-          <ShoppingCart className="w-6 h-6" />
-          {itemCount > 0 && (
-            <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
-              {itemCount}
-            </span>
+        {/* Navigation */}
+        <div className="flex items-center gap-6">
+          {user && (
+            <>
+              <span className="text-sm">
+                Olá, <strong>{user.email}</strong>
+              </span>
+              {user.role === 'admin' && (
+                <button
+                  onClick={() => navigate('/admin')}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Admin
+                </button>
+              )}
+            </>
           )}
-        </button>
+
+          {/* Theme Toggle */}
+          <button
+            onClick={toggleTheme}
+            className={`p-2 rounded-lg ${
+              theme === 'dark' ? 'bg-gray-700' : 'bg-gray-200'
+            } hover:opacity-80 transition-opacity`}
+            title="Alternar tema"
+          >
+            {theme === 'dark' ? '☀️' : '🌙'}
+          </button>
+
+          {/* Logout */}
+          {user && (
+            <button
+              onClick={handleLogout}
+              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+            >
+              Sair
+            </button>
+          )}
+        </div>
       </div>
     </header>
   );
-};
+}

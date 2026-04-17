@@ -1,38 +1,55 @@
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
+import { CartProvider } from './contexts/CartContext';
 import { TenantProvider } from './contexts/TenantContext';
 import { ThemeProvider } from './contexts/ThemeContext';
-import { CartProvider } from './contexts/CartContext';
-import { StorePage } from './pages/StorePage';
-import { LoginPage } from './pages/LoginPage';
-import { AdminDashboard } from './pages/AdminDashboard';
-import { PrivateRoute } from './components/PrivateRoute';
+import PrivateRoute from './components/PrivateRoute';
+import Header from './components/Header';
+import LoginPage from './pages/LoginPage';
+import StorePage from './pages/StorePage';
+import AdminDashboard from './pages/AdminDashboard';
+import './index.css';
+
+// Analisando arquivo
 
 function App() {
+  useEffect(() => {
+    // Prevent layout shift by adjusting viewport
+    const viewport = document.querySelector('meta[name="viewport"]');
+    if (!viewport) {
+      const meta = document.createElement('meta');
+      meta.name = 'viewport';
+      meta.content = 'width=device-width, initial-scale=1.0';
+      document.head.appendChild(meta);
+    }
+  }, []);
+
   return (
-    <Router>
+    <ThemeProvider>
       <AuthProvider>
         <TenantProvider>
-          <ThemeProvider>
-            <CartProvider>
+          <CartProvider>
+            <Router>
+              <Header />
               <Routes>
-                <Route path="/" element={<StorePage />} />
-                <Route path="/admin" element={<LoginPage />} />
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/store" element={<StorePage />} />
+                <Route path="/" element={<Navigate to="/store" replace />} />
                 <Route
-                  path="/admin/dashboard"
+                  path="/admin/*"
                   element={
-                    <PrivateRoute>
+                    <PrivateRoute requiredRole="admin">
                       <AdminDashboard />
                     </PrivateRoute>
                   }
                 />
-                <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
-            </CartProvider>
-          </ThemeProvider>
+            </Router>
+          </CartProvider>
         </TenantProvider>
       </AuthProvider>
-    </Router>
+    </ThemeProvider>
   );
 }
 

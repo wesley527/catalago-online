@@ -1,40 +1,40 @@
-import { useState, useEffect } from 'react';
-import { X, CheckCircle, AlertCircle } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 
 interface ToastProps {
   message: string;
-  type?: 'success' | 'error';
+  type?: 'success' | 'error' | 'info';
   duration?: number;
-  onClose: () => void;
 }
 
-export const Toast = ({ message, type = 'success', duration = 3000, onClose }: ToastProps) => {
-  useEffect(() => {
-    const timer = setTimeout(onClose, duration);
-    return () => clearTimeout(timer);
-  }, [duration, onClose]);
+export default function Toast({ message, type = 'info', duration = 3000 }: ToastProps) {
+  const [visible, setVisible] = useState(true);
 
-  const bgColor = type === 'success' ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200';
-  const textColor = type === 'success' ? 'text-green-800' : 'text-red-800';
-  const Icon = type === 'success' ? CheckCircle : AlertCircle;
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setVisible(false);
+    }, duration);
+
+    return () => clearTimeout(timer);
+  }, [duration]);
+
+  if (!visible) return null;
+
+  const bgColor = {
+    success: 'bg-green-500',
+    error: 'bg-red-500',
+    info: 'bg-blue-500',
+  }[type];
+
+  const icon = {
+    success: '✅',
+    error: '❌',
+    info: 'ℹ️',
+  }[type];
 
   return (
-    <div className={`fixed bottom-4 right-4 flex items-center gap-3 px-4 py-3 rounded-lg border ${bgColor} z-50 animate-in fade-in slide-in-from-bottom-2`}>
-      <Icon className={`w-5 h-5 ${textColor}`} />
-      <p className={`${textColor} font-medium`}>{message}</p>
-      <button onClick={onClose} className={`${textColor} hover:opacity-70`}>
-        <X className="w-4 h-4" />
-      </button>
+    <div className={`fixed bottom-4 right-4 ${bgColor} text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-3 animate-pulse z-50`}>
+      <span>{icon}</span>
+      <p>{message}</p>
     </div>
   );
-};
-
-export const useToast = () => {
-  const [toast, setToast] = useState<ToastProps | null>(null);
-
-  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
-    setToast({ message, type, onClose: () => setToast(null) });
-  };
-
-  return { toast, showToast };
-};
+}

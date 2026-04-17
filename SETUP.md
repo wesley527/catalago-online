@@ -178,3 +178,180 @@ Problema? Verifique:
 2. Logs do servidor no terminal
 3. Status das tabelas no Supabase Dashboard
 4. Configuração das credenciais no `.env`
+
+# Guia de Configuração do Supabase
+
+## 📦 Criando as Tabelas no Supabase
+
+Siga estes passos para criar as tabelas necessárias:
+
+### 1. Acesse o Supabase Dashboard
+
+1. Vá para [supabase.com](https://supabase.com)
+2. Faça login ou crie uma conta
+3. Crie um novo projeto
+
+### 2. Execute as Queries SQL
+
+Vá em **SQL Editor** e execute os seguintes comandos:
+
+```sql
+-- Criar tabela de tenants (lojas)
+CREATE TABLE tenants (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL,
+  slug TEXT UNIQUE NOT NULL,
+  logo_url TEXT,
+  color TEXT DEFAULT '#FF6B35',
+  theme TEXT DEFAULT 'light',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+);
+
+-- Criar tabela de categorias
+CREATE TABLE categories (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  description TEXT,
+  image_url TEXT,
+  active BOOLEAN DEFAULT true,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+);
+
+-- Criar tabela de produtos
+CREATE TABLE products (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  category_id UUID REFERENCES categories(id),
+  name TEXT NOT NULL,
+  description TEXT,
+  price DECIMAL(10, 2) NOT NULL,
+  image_url TEXT,
+  stock INTEGER DEFAULT 0,
+  active BOOLEAN DEFAULT true,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+);
+
+-- Criar tabela de áreas de entrega
+CREATE TABLE delivery_areas (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  zip_codes TEXT[] NOT NULL,
+  delivery_fee DECIMAL(10, 2) NOT NULL,
+  active BOOLEAN DEFAULT true,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+);
+
+-- Criar tabela de pedidos
+CREATE TABLE orders (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  customer_name TEXT NOT NULL,
+  customer_email TEXT NOT NULL,
+  customer_phone TEXT NOT NULL,
+  address TEXT NOT NULL,
+  delivery_area_id UUID REFERENCES delivery_areas(id),
+  items JSONB NOT NULL,
+  total DECIMAL(10, 2) NOT NULL,
+  status TEXT DEFAULT 'pending',
+  payment_method TEXT DEFAULT 'cash',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+);
+
+-- Criar índices para melhor performance
+CREATE INDEX idx_products_tenant_id ON products(tenant_id);
+CREATE INDEX idx_products_category_id ON products(category_id);
+CREATE INDEX idx_categories_tenant_id ON categories(tenant_id);
+CREATE INDEX idx_delivery_areas_tenant_id ON delivery_areas(tenant_id);
+CREATE INDEX idx_orders_tenant_id ON orders(tenant_id);
+CREATE INDEX idx_orders_status ON orders(status);
+```
+
+### 3. Configurar Autenticação
+
+1. Vá em **Authentication** > **Providers**
+2. Habilite **Email**
+3. Configure as opções de recuperação de senha se necessário
+
+### 4. Obter Credenciais
+
+1. Vá em **Settings** > **API**
+2. Copie:
+   - `Project URL` → `VITE_SUPABASE_URL`
+   - `anon public` → `VITE_SUPABASE_ANON_KEY`
+
+3. Cole no arquivo `.env.local`
+
+### 5. Inserir Dados de Teste
+
+```sql
+-- Inserir tenant de teste
+INSERT INTO tenants (name, slug, color, theme)
+VALUES ('Loja de Teste', 'loja-teste', '#FF6B35', 'light');
+
+-- Obter ID do tenant (copie o ID gerado)
+SELECT id FROM tenants WHERE slug = 'loja-teste';
+
+-- Inserir categorias (substitua TENANT_ID pelo ID obtido acima)
+INSERT INTO categories (tenant_id, name, description, active)
+VALUES 
+  ('TENANT_ID', 'Eletrônicos', 'Produtos eletrônicos', true),
+  ('TENANT_ID', 'Roupas', 'Vestuário em geral', true),
+  ('TENANT_ID', 'Livros', 'Livros e publicações', true);
+
+-- Inserir produtos
+INSERT INTO products (tenant_id, category_id, name, description, price, stock, active)
+VALUES 
+  ('TENANT_ID', (SELECT id FROM categories WHERE name = 'Eletrônicos' LIMIT 1), 'Smartphone', 'Smartphone moderno', 999.99, 50, true),
+  ('TENANT_ID', (SELECT id FROM categories WHERE name = 'Roupas' LIMIT 1), 'Camiseta', 'Camiseta 100% algodão', 49.99, 100, true),
+  ('TENANT_ID', (SELECT id FROM categories WHERE name = 'Livros' LIMIT 1), 'JavaScript Moderno', 'Aprenda JavaScript', 89.90, 30, true);
+
+-- Inserir áreas de entrega
+INSERT INTO delivery_areas (tenant_id, name, zip_codes, delivery_fee, active)
+VALUES 
+  ('TENANT_ID', 'Zona Centro', ARRAY['01000-000', '02000-000', '03000-000'], 10.00, true),
+  ('TENANT_ID', 'Zona Norte', ARRAY['04000-000', '05000-000'], 15.00, true),
+  ('TENANT_ID', 'Zona Sul', ARRAY['06000-000', '07000-000'], 15.00, true);
+```
+
+### 6. Criar Usuário de Teste
+
+1. Vá em **Authentication** > **Users**
+2. Clique em **Create new user**
+3. Email: `admin@example.com`
+4. Senha: `admin123`
+5. Confirme o email se necessário
+
+## ✅ Pronto!
+
+Agora você pode:
+1. Rodar `npm install`
+2. Rodar `npm run dev`
+3. Acessar `http://localhost:5173`
+4. Fazer login com `admin@example.com` / `admin123`
+
+## 🐛 Troubleshooting
+
+**Erro: "Supabase credentials not found"**
+- Verifique se `.env.local` existe
+- Confirme que as variáveis estão corretas
+
+**Erro: "Relation does not exist"**
+- Execute novamente os comandos SQL das tabelas
+- Verifique se não há erros nas queries
+
+**Erro de autenticação**
+- Verifique se o usuário foi criado corretamente
+- Limpe cache do navegador e tente novamente
+
+## 📚 Recursos Úteis
+
+- [Documentação Supabase](https://supabase.com/docs)
+- [Documentação React](https://react.dev)
+- [Documentação TypeScript](https://www.typescriptlang.org/docs)

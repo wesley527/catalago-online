@@ -1,23 +1,30 @@
+import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 interface PrivateRouteProps {
   children: React.ReactNode;
+  requiredRole?: 'admin' | 'user';
 }
 
-export const PrivateRoute = ({ children }: PrivateRouteProps) => {
-  const { isAuthenticated, loading } = useAuth();
+export default function PrivateRoute({ children, requiredRole }: PrivateRouteProps) {
+  const { user, loading } = useAuth();
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Carregando...</p>
-        </div>
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-lg text-gray-500">Carregando...</p>
       </div>
     );
   }
 
-  return isAuthenticated ? children : <Navigate to="/admin" replace />;
-};
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (requiredRole && user.role !== requiredRole) {
+    return <Navigate to="/store" replace />;
+  }
+
+  return <>{children}</>;
+}

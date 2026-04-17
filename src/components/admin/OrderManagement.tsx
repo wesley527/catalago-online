@@ -1,235 +1,140 @@
-import { useState, useEffect } from 'react';
-import { ChevronDown, AlertCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
 import { useTenant } from '../../contexts/TenantContext';
-import { orderService } from '../../services/orderService';
-import { formatCurrency } from '../../lib/utils';
+import Toast from '../Toast';
+import { getOrders, updateOrderStatus } from '../../services/orderService';
+import type { Order } from '../../lib/types';
 
-interface OrderWithItems {
-  id: string;
-  customer_name: string;
-  customer_phone: string;
-  customer_address: string;
-  total_amount: number;
-  status: string;
-  created_at: string;
-  items: any[];
-}
-
-export const OrderManagement = () => {
+export default function OrderManagement() {
   const { tenant } = useTenant();
-  const [orders, setOrders] = useState<OrderWithItems[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (tenant?.id) {
-      loadOrders();
-    }
+    loadOrders();
   }, [tenant?.id]);
 
   const loadOrders = async () => {
     if (!tenant?.id) return;
-
     try {
       setLoading(true);
-      setError(null);
-      const data = await orderService.getOrdersWithItems(tenant.id);
+      const data = await getOrders(tenant.id);
       setOrders(data);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Erro ao carregar pedidos';
-      setError(message);
+      setError('Erro ao carregar pedidos');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleStatusChange = async (orderId: string, newStatus: string) => {
-    if (!tenant?.id) return;
-
+  const handleStatusChange = async (orderId: string, newStatus: Order['status']) => {
     try {
-      await orderService.updateOrderStatus(orderId, newStatus, tenant.id);
-      setOrders(
-        orders.map((order) =>
+      await updateOrderStatus(orderId, newStatus);
+      setOrders((prev) =>
+        prev.map((order) =>
           order.id === orderId ? { ...order, status: newStatus } : order
         )
       );
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Erro ao atualizar status';
-      setError(message);
+      setError('Erro ao atualizar status do pedido');
     }
   };
 
-  const getStatusText = (status: string) => {
-    if (status === 'pending') return 'Pendente';
-    if (status === 'confirmed') return 'Confirmado';
-    if (status === 'delivered') return 'Entregue';
-    return status;
+  const statusColors = {
+    pending: 'bg-yellow-100 text-yellow-800',
+    confirmed: 'bg-blue-100 text-blue-800',
+    preparing: 'bg-purple-100 text-purple-800',
+    delivered: 'bg-green-100 text-green-800',
+    cancelled: 'bg-red-100 text-red-800',
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+  const statusLabels = {
+    pending: 'Pendente',
+    confirmed: 'Confirmado',
+    preparing: 'Preparando',
+    delivered: 'Entregue',
+    cancelled: 'Cancelado',
   };
 
-  const formatPhone = (phone: string) => {
-    const cleaned = phone.replace(/\D/g, '');
-    if (cleaned.length === 11) {
-      return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 7)}-${cleaned.slice(7)}`;
-    }
-    return phone;
-  };
+  if (loading && orders.length === 0) {
+    return <p className="text-center py-8">Carregando pedidos...</p>;
+  }
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-900">Gerenciar Pedidos</h2>
+    <div>
+      <h2 className="text-2xl font-bold mb-6">Gerenciar Pedidos</h2>
 
-      {error && (
-        <div className="flex items-center gap-3 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-          <AlertCircle className="w-5 h-5 flex-shrink-0" />
-          <span>{error}</span>
-        </div>
-      )}
+      {error && <Toast message={error} type="error" />}
 
-      {loading ? (
-        <div className="flex items-center justify-center h-96">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Carregando pedidos...</p>
-          </div>
-        </div>
-      ) : orders.length === 0 ? (
-        <div className="flex items-center justify-center h-96 bg-white rounded-lg border-2 border-dashed border-gray-300">
-          <p className="text-gray-600 text-lg">Nenhum pedido realizado ainda</p>
-        </div>
+      {orders.length === 0 ? (
+        <p className="text-center text-gray-500 py-8">Nenhum pedido encontrado</p>
       ) : (
         <div className="space-y-4">
           {orders.map((order) => (
-            <div key={order.id} className="bg-white rounded-lg shadow overflow-hidden">
-              <button
-                onClick={() =>
-                  setExpandedOrderId(expandedOrderId === order.id ? null : order.id)
-                }
-                className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
+            <div
+              key={order.id}
+              className="border rounded-lg overflow-hidden hover:shadow-md transition-shadow"
+            >
+              <div
+                onClick={() => setExpandedOrderId(expandedOrderId === order.id ? null : order.id)}
+                className="p-4 bg-gray-50 cursor-pointer flex justify-between items-center"
               >
-                <div className="flex-1 text-left">
-                  <div className="flex items-center gap-4 mb-2">
-                    <span className="font-semibold text-gray-900">
-                      #{order.id.slice(0, 8)}
-                    </span>
-                    <span
-                      className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                        order.status === 'pending'
-                          ? 'bg-yellow-100 text-yellow-800'
-                          : order.status === 'confirmed'
-                          ? 'bg-blue-100 text-blue-800'
-                          : 'bg-green-100 text-green-800'
-                      }`}
-                    >
-                      {getStatusText(order.status)}
-                    </span>
-                  </div>
-                  <p className="text-sm text-gray-600">
-                    {order.customer_name} • {formatPhone(order.customer_phone)}
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    {formatDate(order.created_at)}
-                  </p>
+                <div className="flex-1">
+                  <h3 className="font-semibold">{order.customer_name}</h3>
+                  <p className="text-sm text-gray-600">{order.customer_email}</p>
+                  <p className="text-sm text-gray-600">{order.customer_phone}</p>
                 </div>
-
                 <div className="flex items-center gap-4">
-                  <span className="text-lg font-bold text-blue-600">
-                    {formatCurrency(order.total_amount)}
+                  <span className="text-lg font-bold text-orange-600">
+                    R$ {order.total.toFixed(2)}
                   </span>
-                  <ChevronDown
-                    className={`w-5 h-5 text-gray-400 transition-transform ${
-                      expandedOrderId === order.id ? 'rotate-180' : ''
+                  <span
+                    className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                      statusColors[order.status]
                     }`}
-                  />
+                  >
+                    {statusLabels[order.status]}
+                  </span>
+                  <span className="text-gray-500">
+                    {expandedOrderId === order.id ? '▲' : '▼'}
+                  </span>
                 </div>
-              </button>
+              </div>
 
               {expandedOrderId === order.id && (
-                <div className="border-t px-6 py-4 bg-gray-50 space-y-4">
-                  
-                  {/* Cliente */}
-                  <div>
-                    <h4 className="font-semibold text-gray-900 mb-2">
-                      Informações do Cliente
-                    </h4>
-                    <div className="space-y-1 text-sm text-gray-700">
-                      <p><strong>Nome:</strong> {order.customer_name}</p>
-                      <p>
-                        <strong>WhatsApp:</strong>{' '}
-                        <a
-                          href={`https://wa.me/55${order.customer_phone.replace(/\D/g, '')}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-600 hover:underline"
-                        >
-                          {formatPhone(order.customer_phone)}
-                        </a>
-                      </p>
-                      <p><strong>Endereço:</strong> {order.customer_address}</p>
+                <div className="p-4 border-t">
+                  <div className="mb-4">
+                    <h4 className="font-semibold mb-2">Itens do Pedido:</h4>
+                    <div className="space-y-2 text-sm">
+                      {order.items.map((item, idx) => (
+                        <div key={idx} className="flex justify-between">
+                          <span>{item.product_name} x{item.quantity}</span>
+                          <span className="font-semibold">R$ {item.total.toFixed(2)}</span>
+                        </div>
+                      ))}
                     </div>
                   </div>
 
-                  {/* Produtos */}
-                  <div>
-                    <h4 className="font-semibold text-gray-900 mb-2">Produtos</h4>
-                    <div className="space-y-2">
-                      {order.items?.length > 0 ? (
-                        order.items.map((item: any) => (
-                          <div key={item.id} className="flex justify-between text-sm bg-white p-2 rounded">
-                            <span>
-                              {item.products?.name || 'Produto'} x{item.quantity}
-                            </span>
-                            <span>
-                              {formatCurrency(item.unit_price * item.quantity)}
-                            </span>
-                          </div>
-                        ))
-                      ) : (
-                        <p className="text-sm text-gray-600">Sem itens</p>
-                      )}
-                    </div>
+                  <div className="mb-4 p-3 bg-gray-50 rounded">
+                    <p className="text-sm"><strong>Endereço:</strong> {order.address}</p>
+                    <p className="text-sm"><strong>Pagamento:</strong> {order.payment_method}</p>
+                    <p className="text-sm"><strong>Data:</strong> {new Date(order.created_at).toLocaleDateString('pt-BR')}</p>
                   </div>
 
-                  {/* Status */}
-                  <div>
-                    <h4 className="font-semibold text-gray-900 mb-2">Status</h4>
-
+                  <div className="flex gap-2">
                     <select
                       value={order.status}
-                      onChange={(e) => handleStatusChange(order.id, e.target.value)}
-                      className="px-3 py-2 border border-gray-300 rounded-lg"
+                      onChange={(e) => handleStatusChange(order.id, e.target.value as Order['status'])}
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg"
                     >
                       <option value="pending">Pendente</option>
                       <option value="confirmed">Confirmado</option>
+                      <option value="preparing">Preparando</option>
                       <option value="delivered">Entregue</option>
+                      <option value="cancelled">Cancelado</option>
                     </select>
-
-                    {order.status !== 'pending' && (
-                      <div className="flex gap-3 mt-3">
-                        <a
-                          href={`https://wa.me/55${order.customer_phone.replace(/\D/g, '')}?text=${encodeURIComponent(
-                            `Olá ${order.customer_name}, seu pedido foi atualizado para: ${getStatusText(order.status)}.\n\nObrigado pela preferência!`
-                          )}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-semibold transition"
-                        >
-                          Enviar status no WhatsApp
-                        </a>
-                      </div>
-                    )}
                   </div>
-
                 </div>
               )}
             </div>
@@ -238,4 +143,4 @@ export const OrderManagement = () => {
       )}
     </div>
   );
-};
+}

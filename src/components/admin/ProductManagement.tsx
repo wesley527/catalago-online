@@ -1,184 +1,115 @@
-import { useState, useEffect } from 'react';
-import { Plus, Trash2, CreditCard as Edit2, AlertCircle } from 'lucide-react';
-import { Product } from '../../lib/types';
-import { productService } from '../../services/productService';
+import React, { useState, useEffect } from 'react';
 import { useTenant } from '../../contexts/TenantContext';
-import { ProductForm } from './ProductForm';
-import { formatCurrency } from '../../lib/utils';
+import ProductForm from './ProductForm';
+import Toast from '../Toast';
+import { getProducts, deleteProduct } from '../../services/productService';
+import type { Product } from '../../lib/types';
 
-export const ProductManagement = () => {
+export default function ProductManagement() {
   const { tenant } = useTenant();
   const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
   useEffect(() => {
-    if (tenant?.id) {
-      loadProducts();
-    }
+    loadProducts();
   }, [tenant?.id]);
 
   const loadProducts = async () => {
     if (!tenant?.id) return;
-
     try {
       setLoading(true);
-      setError(null);
-      const data = await productService.getAllProducts(tenant.id);
+      const data = await getProducts(tenant.id);
       setProducts(data);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Erro ao carregar produtos';
-      setError(message);
+      setError('Erro ao carregar produtos');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDeleteProduct = async (id: string) => {
-    if (!window.confirm('Tem certeza que deseja deletar este produto?')) return;
-    if (!tenant?.id) return;
-
+  const handleDelete = async (id: string) => {
+    if (!confirm('Tem certeza que deseja deletar este produto?')) return;
     try {
-      await productService.deleteProduct(id, tenant.id);
-      setProducts(products.filter((p) => p.id !== id));
+      await deleteProduct(id);
+      setProducts((prev) => prev.filter((p) => p.id !== id));
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Erro ao deletar produto';
-      setError(message);
+      setError('Erro ao deletar produto');
     }
   };
 
   const handleFormClose = () => {
     setShowForm(false);
     setEditingProduct(null);
-  };
-
-  const handleFormSuccess = () => {
-    handleFormClose();
     loadProducts();
   };
 
+  if (loading && products.length === 0) {
+    return <p className="text-center py-8">Carregando produtos...</p>;
+  }
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900">Gerenciar Produtos</h2>
+    <div>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold">Gerenciar Produtos</h2>
         <button
           onClick={() => setShowForm(true)}
-          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+          className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700"
         >
-          <Plus className="w-5 h-5" />
-          Novo Produto
+          + Novo Produto
         </button>
       </div>
 
-      {error && (
-        <div className="flex items-center gap-3 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-          <AlertCircle className="w-5 h-5 flex-shrink-0" />
-          <span>{error}</span>
-        </div>
-      )}
-
-      {loading ? (
-        <div className="flex items-center justify-center h-96">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Carregando produtos...</p>
-          </div>
-        </div>
-      ) : products.length === 0 ? (
-        <div className="flex items-center justify-center h-96 bg-white rounded-lg border-2 border-dashed border-gray-300">
-          <div className="text-center">
-            <p className="text-gray-600 text-lg mb-4">Nenhum produto cadastrado</p>
-            <button
-              onClick={() => setShowForm(true)}
-              className="flex items-center gap-2 mx-auto bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
-            >
-              <Plus className="w-5 h-5" />
-              Criar Primeiro Produto
-            </button>
-          </div>
-        </div>
-      ) : (
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <table className="w-full">
-            <thead className="bg-gray-50 border-b">
-              <tr>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Produto</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Preço</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Estoque</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {products.map((product) => (
-                <tr key={product.id} className="border-b hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      {product.image_url && (
-                        <img
-                          src={product.image_url}
-                          alt={product.name}
-                          className="w-10 h-10 rounded object-cover"
-                        />
-                      )}
-                      <div>
-                        <p className="font-medium text-gray-900">{product.name}</p>
-                        <p className="text-sm text-gray-600 line-clamp-1">
-                          {product.description}
-                        </p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-blue-600 font-semibold">
-                    {formatCurrency(product.price)}
-                  </td>
-                  <td className="px-6 py-4">
-                    <span
-                      className={`inline-flex px-3 py-1 rounded-full text-sm font-semibold ${
-                        product.stock_quantity === 0
-                          ? 'bg-red-100 text-red-800'
-                          : product.stock_quantity < 5
-                            ? 'bg-orange-100 text-orange-800'
-                            : 'bg-green-100 text-green-800'
-                      }`}
-                    >
-                      {product.stock_quantity}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <button
-                        onClick={() => {
-                          setEditingProduct(product);
-                          setShowForm(true);
-                        }}
-                        className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 p-2 rounded transition-colors"
-                      >
-                        <Edit2 className="w-5 h-5" />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteProduct(product.id)}
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50 p-2 rounded transition-colors"
-                      >
-                        <Trash2 className="w-5 h-5" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      {error && <Toast message={error} type="error" />}
 
       {showForm && (
         <ProductForm
           product={editingProduct}
           onClose={handleFormClose}
-          onSuccess={handleFormSuccess}
         />
+      )}
+
+      {products.length === 0 ? (
+        <p className="text-center text-gray-500 py-8">Nenhum produto cadastrado</p>
+      ) : (
+        <div className="grid gap-4">
+          {products.map((product) => (
+            <div
+              key={product.id}
+              className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50"
+            >
+              <div className="flex-1">
+                <h3 className="font-semibold">{product.name}</h3>
+                <p className="text-sm text-gray-600">{product.description}</p>
+                <div className="flex gap-4 mt-2 text-sm">
+                  <span>R$ {product.price.toFixed(2)}</span>
+                  <span>Estoque: {product.stock}</span>
+                  <span>{product.active ? '✅ Ativo' : '❌ Inativo'}</span>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    setEditingProduct(product);
+                    setShowForm(true);
+                  }}
+                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                >
+                  Editar
+                </button>
+                <button
+                  onClick={() => handleDelete(product.id)}
+                  className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+                >
+                  Deletar
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );
-};
+}

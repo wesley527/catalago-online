@@ -1,46 +1,60 @@
-import { createContext, useContext, useEffect, ReactNode } from 'react';
-import { useTenant } from './TenantContext';
+import React, { createContext, useContext, useEffect, useState } from 'react';
+
+type ThemeType = 'light' | 'dark';
 
 interface ThemeContextType {
-  primaryColor: string;
-  secondaryColor: string;
-  logoUrl: string | null;
-  bannerUrl: string | null;
+  theme: ThemeType;
+  toggleTheme: () => void;
+  setTheme: (theme: ThemeType) => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-export const ThemeProvider = ({ children }: { children: ReactNode }) => {
-  const { tenantSettings } = useTenant();
-
-  const primaryColor = tenantSettings?.primary_color || '#2563eb';
-  const secondaryColor = tenantSettings?.secondary_color || '#10b981';
-  const logoUrl = tenantSettings?.logo_url || null;
-  const bannerUrl = tenantSettings?.banner_url || null;
+export function ThemeProvider({ children }: { children: React.ReactNode }) {
+  const [theme, setThemeState] = useState<ThemeType>('light');
 
   useEffect(() => {
-    document.documentElement.style.setProperty('--color-primary', primaryColor);
-    document.documentElement.style.setProperty('--color-secondary', secondaryColor);
-  }, [primaryColor, secondaryColor]);
+    // Load theme from localStorage
+    const savedTheme = localStorage.getItem('theme') as ThemeType | null;
+    if (savedTheme) {
+      setThemeState(savedTheme);
+    } else {
+      // Check system preference
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      setThemeState(prefersDark ? 'dark' : 'light');
+    }
+  }, []);
+
+  useEffect(() => {
+    // Update document class
+    const htmlElement = document.documentElement;
+    if (theme === 'dark') {
+      htmlElement.classList.add('dark');
+    } else {
+      htmlElement.classList.remove('dark');
+    }
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setThemeState((prevTheme) => (prevTheme === 'light' ? 'dark' : 'light'));
+  };
+
+  const setTheme = (newTheme: ThemeType) => {
+    setThemeState(newTheme);
+  };
 
   return (
-    <ThemeContext.Provider
-      value={{
-        primaryColor,
-        secondaryColor,
-        logoUrl,
-        bannerUrl,
-      }}
-    >
+    <ThemeContext.Provider value={{ theme, toggleTheme, setTheme }}>
       {children}
     </ThemeContext.Provider>
   );
-};
+}
 
-export const useTheme = () => {
+export function useTheme() {
   const context = useContext(ThemeContext);
-  if (!context) {
+  if (context === undefined) {
     throw new Error('useTheme must be used within ThemeProvider');
   }
   return context;
-};
+}

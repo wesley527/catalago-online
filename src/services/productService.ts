@@ -1,52 +1,41 @@
 import { supabase } from '../lib/supabase';
-import { Product } from '../lib/types';
+import type { Product } from '../lib/types';
 
-export const productService = {
-  async getAllProducts(tenantId?: string): Promise<Product[]> {
-    let query = supabase
-      .from('products')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (tenantId) {
-      query = query.eq('tenant_id', tenantId);
-    }
-
-    const { data, error } = await query;
-
-    if (error) throw error;
-    return data || [];
-  },
-
-  async getProductsByCategory(tenantId: string, categoryId: string): Promise<Product[]> {
+export async function getProducts(tenantId: string): Promise<Product[]> {
+  try {
     const { data, error } = await supabase
       .from('products')
       .select('*')
       .eq('tenant_id', tenantId)
-      .eq('category_id', categoryId)
+      .eq('active', true)
       .order('created_at', { ascending: false });
 
     if (error) throw error;
     return data || [];
-  },
+  } catch (error) {
+    console.error('Error fetching products:', error);
+    return [];
+  }
+}
 
-  async getProductById(id: string, tenantId?: string): Promise<Product | null> {
-    let query = supabase
+export async function getProductById(id: string): Promise<Product | null> {
+  try {
+    const { data, error } = await supabase
       .from('products')
       .select('*')
-      .eq('id', id);
-
-    if (tenantId) {
-      query = query.eq('tenant_id', tenantId);
-    }
-
-    const { data, error } = await query.maybeSingle();
+      .eq('id', id)
+      .single();
 
     if (error) throw error;
     return data;
-  },
+  } catch (error) {
+    console.error('Error fetching product:', error);
+    return null;
+  }
+}
 
-  async createProduct(product: Omit<Product, 'id' | 'created_at' | 'updated_at'>): Promise<Product> {
+export async function createProduct(product: Omit<Product, 'id' | 'created_at' | 'updated_at'>): Promise<Product> {
+  try {
     const { data, error } = await supabase
       .from('products')
       .insert([product])
@@ -55,52 +44,36 @@ export const productService = {
 
     if (error) throw error;
     return data;
-  },
-
- async updateProduct(id: string, updates: Partial<Product>): Promise<Product> {
-  const { data, error } = await supabase
-    .from('products')
-    .update(updates)
-    .eq('id', id)
-    .select()
-    .maybeSingle();
-
-  if (error) {
-    console.error('UPDATE PRODUCT ERROR:', error);
-    throw error;
+  } catch (error) {
+    throw new Error(`Error creating product: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
+}
 
-  if (!data) {
-    throw new Error('Product not found or access denied');
-  }
-
-  return data;
-},
-
-  async deleteProduct(id: string, tenantId?: string): Promise<void> {
-    let query = supabase.from('products').delete().eq('id', id);
-
-    if (tenantId) {
-      query = query.eq('tenant_id', tenantId);
-    }
-
-    const { error } = await query;
+export async function updateProduct(id: string, updates: Partial<Product>): Promise<Product> {
+  try {
+    const { data, error } = await supabase
+      .from('products')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
 
     if (error) throw error;
-  },
+    return data;
+  } catch (error) {
+    throw new Error(`Error updating product: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
 
-  async updateStock(id: string, quantity: number, tenantId?: string): Promise<void> {
-    let query = supabase
+export async function deleteProduct(id: string): Promise<void> {
+  try {
+    const { error } = await supabase
       .from('products')
-      .update({ stock_quantity: quantity })
+      .delete()
       .eq('id', id);
 
-    if (tenantId) {
-      query = query.eq('tenant_id', tenantId);
-    }
-
-    const { error } = await query;
-
     if (error) throw error;
-  },
-};
+  } catch (error) {
+    throw new Error(`Error deleting product: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}

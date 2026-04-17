@@ -1,214 +1,120 @@
-# CatalogHub - Sistema de Catálogo Online com Controle de Estoque
+# Catálogo Online
 
-Um sistema completo de e-commerce com catálogo de produtos, carrinho de compras, gerenciamento de estoque e integração com WhatsApp.
+Uma plataforma de e-commerce SaaS completa com suporte para múltiplas lojas, gerenciamento de produtos, pedidos e entrega.
 
-## Funcionalidades
+## 🚀 Recursos
 
-### Área do Cliente
-- ✅ Catálogo de produtos responsivo com cards modernos
-- ✅ Carrinho de compras funcional com sidebar
-- ✅ Visualização de quantidade em estoque
-- ✅ Finalização de pedido com validação
-- ✅ Integração automática com WhatsApp (wa.me)
-- ✅ Notificações visuais de ações
+- ✅ Autenticação de usuários
+- ✅ Gerenciamento multi-tenant
+- ✅ Catálogo de produtos com categorias
+- ✅ Carrinho de compras
+- ✅ Gerenciamento de pedidos
+- ✅ Áreas de entrega configuráveis
+- ✅ Tema claro/escuro
+- ✅ Painel administrativo
+- ✅ Interface responsiva
 
-### Painel Administrativo
-- ✅ Autenticação segura
-- ✅ Adicionar, editar e deletar produtos
-- ✅ Upload de imagens para produtos
-- ✅ Controle automático de estoque
-- ✅ Visualização de todos os pedidos realizados
-- ✅ Alteração de status de pedidos
-- ✅ Links diretos para contato com clientes via WhatsApp
+## 📋 Pré-requisitos
 
-## Tecnologias Utilizadas
+- Node.js 16+ 
+- npm ou yarn
+- Conta Supabase
 
-- **Frontend:** React 18 + TypeScript
-- **Styling:** Tailwind CSS
-- **Routing:** React Router v6
-- **Banco de Dados:** Supabase (PostgreSQL)
-- **Autenticação:** Supabase Auth
-- **Storage:** Supabase Storage (para imagens)
-- **Icons:** Lucide React
-- **Build Tool:** Vite
+## 🔧 Instalação
 
-## Instalação e Configuração
-
-### 1. Clonar o Projeto
+1. Clone o repositório:
 ```bash
 git clone <seu-repositorio>
-cd project
+cd catalago-online
 ```
 
-### 2. Instalar Dependências
+2. Instale as dependências:
 ```bash
 npm install
 ```
 
-### 3. Variáveis de Ambiente
-Crie um arquivo `.env` na raiz do projeto com suas credenciais Supabase:
-
-```env
-VITE_SUPABASE_URL=https://seu-projeto.supabase.co
-VITE_SUPABASE_ANON_KEY=sua-chave-anonima
+3. Configure as variáveis de ambiente:
+```bash
+cp .env.example .env.local
 ```
 
-### 4. Executar o Projeto
+4. Edite `.env.local` com suas credenciais do Supabase:
+```
+VITE_SUPABASE_URL=https://seu-project.supabase.co
+VITE_SUPABASE_ANON_KEY=sua-chave-anon
+```
+
+5. Inicie o servidor de desenvolvimento:
 ```bash
 npm run dev
 ```
 
-A aplicação estará disponível em `http://localhost:5173`
+## 📦 Scripts Disponíveis
 
-## Estrutura do Projeto
+- `npm run dev` - Inicia o servidor de desenvolvimento
+- `npm run build` - Cria build de produção
+- `npm run preview` - Visualiza o build de produção localmente
+- `npm run lint` - Executa verificação de linting
+
+## 🗄️ Estrutura do Banco de Dados
+
+### Tabelas Principais
+
+- `users` - Usuários do sistema
+- `tenants` - Lojas/organizações
+- `products` - Produtos
+- `categories` - Categorias de produtos
+- `orders` - Pedidos
+- `delivery_areas` - Áreas de entrega
+
+## 👤 Credenciais de Teste
+
+- Email: `admin@example.com`
+- Senha: `admin123`
+
+## 🛠️ Tecnologias Utilizadas
+
+- **React 18** - UI Framework
+- **TypeScript** - Tipagem estática
+- **Vite** - Build tool
+- **Tailwind CSS** - Styling
+- **React Router** - Roteamento
+- **Supabase** - Backend & Database
+- **Context API** - State management
+
+## 📝 Estrutura de Pastas
 
 ```
 src/
-├── components/
-│   ├── admin/
-│   │   ├── ProductManagement.tsx
-│   │   ├── ProductForm.tsx
-│   │   └── OrderManagement.tsx
-│   ├── Cart.tsx
-│   ├── CheckoutModal.tsx
-│   ├── Header.tsx
-│   ├── PrivateRoute.tsx
-│   ├── ProductCard.tsx
-│   └── Toast.tsx
-├── contexts/
-│   ├── AuthContext.tsx
-│   └── CartContext.tsx
-├── lib/
-│   ├── supabase.ts
-│   ├── types.ts
-│   └── utils.ts
-├── pages/
-│   ├── AdminDashboard.tsx
-│   ├── LoginPage.tsx
-│   └── StorePage.tsx
-├── services/
-│   ├── orderService.ts
-│   └── productService.ts
-└── App.tsx
+├── components/        # Componentes React
+├── contexts/         # Context API
+├── lib/              # Utilitários e tipos
+├── pages/            # Páginas
+├── services/         # Serviços API
+└── index.css         # Estilos globais
 ```
 
-## Fluxo de Funcionamento
+## 🔐 Autenticação
 
-### Compra pelo Cliente
-1. Cliente visualiza catálogo na página inicial
-2. Adiciona produtos ao carrinho
-3. Abre o carrinho e ajusta quantidades
-4. Clica em "Finalizar Compra"
-5. Preenche formulário com nome, WhatsApp e endereço
-6. Confirma pedido
-7. É redirecionado automaticamente para WhatsApp com resumo da compra
+A autenticação é realizada via Supabase Auth. Os usuários podem fazer login com email e senha.
 
-### Gerenciamento pelo Admin
-1. Admin acessa `/admin` para fazer login
-2. Utiliza email e senha
-3. No dashboard pode:
-   - **Produtos:** Adicionar, editar, deletar e visualizar estoque
-   - **Pedidos:** Visualizar todos os pedidos com detalhes do cliente e produtos
-   - **Status:** Atualizar status de pedidos (Pendente → Confirmado → Entregue)
+## 📱 Features do Admin
 
-## Banco de Dados
+- Gerenciar produtos e categorias
+- Visualizar e atualizar status de pedidos
+- Configurar áreas de entrega
+- Personalizações de loja (cores, temas)
 
-### Tabelas
+## ⚠️ Avisos Importantes
 
-#### `products`
-- `id` (UUID, PK)
-- `name` (TEXT)
-- `description` (TEXT)
-- `price` (NUMERIC)
-- `stock_quantity` (INTEGER)
-- `image_url` (TEXT)
-- `created_at` (TIMESTAMP)
-- `updated_at` (TIMESTAMP)
+- Configure as variáveis de ambiente antes de rodar o projeto
+- Certifique-se de que as tabelas do Supabase estão criadas corretamente
+- Use um token de seção seguro em produção
 
-#### `orders`
-- `id` (UUID, PK)
-- `customer_name` (TEXT)
-- `customer_phone` (TEXT)
-- `customer_address` (TEXT)
-- `total_amount` (NUMERIC)
-- `status` (TEXT) - pending, confirmed, delivered
-- `created_at` (TIMESTAMP)
+## 📧 Suporte
 
-#### `order_items`
-- `id` (UUID, PK)
-- `order_id` (UUID, FK)
-- `product_id` (UUID, FK)
-- `quantity` (INTEGER)
-- `unit_price` (NUMERIC)
-- `created_at` (TIMESTAMP)
+Para problemas ou dúvidas, abra uma issue no repositório.
 
-## Credenciais de Teste
+## 📄 Licença
 
-Para acessar o painel administrativo, use:
-
-```
-Email: admin@example.com
-Senha: password123
-```
-
-> ⚠️ **Importante:** Altere estas credenciais em produção!
-
-## Como Criar uma Conta de Admin
-
-Para criar uma nova conta de administrador:
-
-1. Acesse o Supabase Dashboard
-2. Vá para `Authentication > Users`
-3. Clique em "Add user"
-4. Insira email e senha
-5. A nova conta estará pronta para fazer login
-
-## Customizações Futuras
-
-- [ ] Adicionar categorias de produtos
-- [ ] Implementar sistema de busca e filtros
-- [ ] Cupons de desconto
-- [ ] Carrinho abandonado
-- [ ] Sistema de avaliações
-- [ ] Email de confirmação de pedido
-- [ ] Relatórios de vendas
-- [ ] Dashboard com gráficos
-- [ ] Múltiplos idiomas
-
-## Segurança
-
-- ✅ Autenticação via Supabase Auth
-- ✅ Row Level Security (RLS) habilitado em todas as tabelas
-- ✅ Validação de formulários no frontend
-- ✅ Proteção de rotas privadas
-- ✅ Upload seguro de imagens
-
-## Build para Produção
-
-```bash
-npm run build
-```
-
-Os arquivos gerados estarão em `dist/`
-
-## Troubleshooting
-
-### Imagens não carregam
-Certifique-se que o bucket `product-images` existe no Supabase Storage e possui acesso público.
-
-### Autenticação não funciona
-Verifique se as variáveis de ambiente estão corretas e a sessão Supabase está ativa.
-
-### Estoque não atualiza
-Verifique se o RLS das tabelas está configurado corretamente.
-
-## Suporte
-
-Para dúvidas ou problemas, consulte a documentação:
-- [Supabase Docs](https://supabase.com/docs)
-- [React Docs](https://react.dev)
-- [React Router Docs](https://reactrouter.com)
-
-## Licença
-
-Este projeto é de código aberto e está disponível sob a licença MIT.
+Este projeto está sob a licença MIT.
