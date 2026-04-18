@@ -67,14 +67,6 @@ export interface Order {
   customer_name: string;
   customer_email: string;
   customer_phone: string;
-<<<<<<< HEAD
-  address: string;
-  delivery_area_id?: string;
-  items: OrderItem[];
-  total: number;
-  status: 'pending' | 'confirmed' | 'preparing' | 'delivered' | 'cancelled';
-  payment_method: 'cash' | 'card' | 'pix';
-=======
   customer_address: string;
   total_amount: number;
   status: string;
@@ -83,7 +75,6 @@ export interface Order {
   delivery_fee: number;
   neighborhood_id: string | null;
   neighborhood_name: string | null;
->>>>>>> adf068e03d9f7e7f77d8837055e3a6a822dc94c6
   created_at: string;
   updated_at: string;
 }
@@ -97,6 +88,17 @@ export interface OrderItem {
 }
 
 export interface DeliveryArea {
+  id: string;
+  tenant_id: string;
+  name: string;
+  zip_codes: string[];
+  delivery_fee: number;
+  active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Neighborhood {
   id: string;
   tenant_id: string;
   name: string;

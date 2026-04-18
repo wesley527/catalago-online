@@ -11,11 +11,8 @@ import StorePage from './pages/StorePage';
 import AdminDashboard from './pages/AdminDashboard';
 import './index.css';
 
-// Analisando arquivo
-
 function App() {
   useEffect(() => {
-    // Prevent layout shift by adjusting viewport
     const viewport = document.querySelector('meta[name="viewport"]');
     if (!viewport) {
       const meta = document.createElement('meta');

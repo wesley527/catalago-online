@@ -1,9 +1,3 @@
-<<<<<<< HEAD
-import React, { useState } from 'react';
-import { useCart } from '../contexts/CartContext';
-import { useTenant } from '../contexts/TenantContext';
-import Toast from './Toast';
-=======
 import { useState, useEffect, useMemo } from 'react';
 import { X } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
@@ -13,7 +7,6 @@ import { orderService } from '../services/orderService';
 import { productService } from '../services/productService';
 import { neighborhoodService } from '../services/neighborhoodService';
 import { CheckoutData, DeliveryType, Neighborhood } from '../lib/types';
->>>>>>> adf068e03d9f7e7f77d8837055e3a6a822dc94c6
 
 interface CheckoutModalProps {
   onClose: () => void;
@@ -35,11 +28,6 @@ export default function CheckoutModal({ onClose }: CheckoutModalProps) {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
 
-<<<<<<< HEAD
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-=======
   useEffect(() => {
     if (!isOpen || !tenant?.id) return;
 
@@ -103,21 +91,10 @@ export default function CheckoutModal({ onClose }: CheckoutModalProps) {
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
->>>>>>> adf068e03d9f7e7f77d8837055e3a6a822dc94c6
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-<<<<<<< HEAD
-    setLoading(true);
-    setMessage('');
-
-    try {
-      // Simulating API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      setMessage('Pedido enviado com sucesso!');
-=======
 
     if (!validateForm()) return;
 
@@ -193,7 +170,6 @@ export default function CheckoutModal({ onClose }: CheckoutModalProps) {
       onSuccess();
       onClose();
 
->>>>>>> adf068e03d9f7e7f77d8837055e3a6a822dc94c6
       setTimeout(() => {
         clearCart();
         onClose();
@@ -205,22 +181,16 @@ export default function CheckoutModal({ onClose }: CheckoutModalProps) {
     }
   };
 
-<<<<<<< HEAD
-=======
   const canChooseDelivery = neighborhoods.length > 0;
 
->>>>>>> adf068e03d9f7e7f77d8837055e3a6a822dc94c6
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-lg shadow-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
         <div className="sticky top-0 bg-white p-6 border-b flex justify-between items-center">
           <h2 className="text-2xl font-bold">Finalizar Compra</h2>
           <button
-            onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 text-2xl"
           >
             ✕
-          </button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
@@ -241,34 +211,6 @@ export default function CheckoutModal({ onClose }: CheckoutModalProps) {
             </div>
           </div>
 
-<<<<<<< HEAD
-          {/* Form Fields */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Nome</label>
-            <input
-              type="text"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
-              required
-              disabled={loading}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
-              required
-              disabled={loading}
-            />
-          </div>
-=======
           <form onSubmit={handleSubmit} className="p-6 space-y-4">
             <div className="bg-gray-50 rounded-lg p-4 mb-6">
               <h3 className="font-semibold text-gray-900 mb-3">Resumo do Pedido</h3>
@@ -376,7 +318,6 @@ export default function CheckoutModal({ onClose }: CheckoutModalProps) {
                 <p className="text-red-600 text-sm mt-1">{errors.customer_name}</p>
               )}
             </div>
->>>>>>> adf068e03d9f7e7f77d8837055e3a6a822dc94c6
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Telefone</label>
@@ -391,34 +332,6 @@ export default function CheckoutModal({ onClose }: CheckoutModalProps) {
             />
           </div>
 
-<<<<<<< HEAD
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Endereço de Entrega</label>
-            <input
-              type="text"
-              name="address"
-              value={formData.address}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
-              required
-              disabled={loading}
-            />
-          </div>
-=======
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                {deliveryType === 'pickup'
-                  ? 'Observações (opcional)'
-                  : 'Endereço completo para entrega'}
-              </label>
-              <textarea
-                value={formData.customer_address}
-                onChange={(e) =>
-                  setFormData({ ...formData, customer_address: e.target.value })
-                }
-                rows={3}
-                placeholder={
-                  deliveryType === 'pickup'
                     ? 'Ex.: horário preferido para retirada'
                     : 'Rua, número, complemento, ponto de referência...'
                 }
@@ -430,7 +343,6 @@ export default function CheckoutModal({ onClose }: CheckoutModalProps) {
                 <p className="text-red-600 text-sm mt-1">{errors.customer_address}</p>
               )}
             </div>
->>>>>>> adf068e03d9f7e7f77d8837055e3a6a822dc94c6
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Forma de Pagamento</label>
@@ -444,7 +356,6 @@ export default function CheckoutModal({ onClose }: CheckoutModalProps) {
               <option value="cash">Dinheiro</option>
               <option value="card">Cartão</option>
               <option value="pix">PIX</option>
-            </select>
           </div>
 
           {message && (

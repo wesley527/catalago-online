@@ -1,243 +1,221 @@
-import { useState, useEffect } from 'react';
-import { Plus, Trash2, Pencil, AlertCircle } from 'lucide-react';
-import { Neighborhood } from '../../lib/types';
-import { neighborhoodService } from '../../services/neighborhoodService';
+import React, { useState, useEffect } from 'react';
 import { useTenant } from '../../contexts/TenantContext';
-import { formatCurrency } from '../../lib/utils';
+import Toast from '../Toast';
+import { getNeighborhoods, deleteNeighborhood } from '../../services/neighborhoodService';
+import type { Neighborhood } from '../../lib/types';
 
-export const NeighborhoodManagement = () => {
+export default function NeighborhoodManagement() {
   const { tenant } = useTenant();
-  const [list, setList] = useState<Neighborhood[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [neighborhoods, setNeighborhoods] = useState<Neighborhood[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const [showForm, setShowForm] = useState(false);
-  const [editing, setEditing] = useState<Neighborhood | null>(null);
-  const [formName, setFormName] = useState('');
-  const [formPrice, setFormPrice] = useState('');
+  const [editingNeighborhood, setEditingNeighborhood] = useState<Neighborhood | null>(null);
+  const [formData, setFormData] = useState({
+    name: '',
+    zip_codes: '',
+    delivery_fee: 0,
+    active: true,
+  });
 
   useEffect(() => {
-    if (tenant?.id) {
-      loadList();
-    }
+    loadNeighborhoods();
   }, [tenant?.id]);
 
-  const loadList = async () => {
+  const loadNeighborhoods = async () => {
     if (!tenant?.id) return;
-
     try {
       setLoading(true);
-      setError(null);
-      const data = await neighborhoodService.getAllByTenant(tenant.id);
-      setList(data);
+      const data = await getNeighborhoods(tenant.id);
+      setNeighborhoods(data);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Erro ao carregar bairros';
-      setError(message);
+      setError('Erro ao carregar bairros');
     } finally {
       setLoading(false);
     }
   };
 
-  const parsePrice = (): number | null => {
-    const n = parseFloat(formPrice.replace(',', '.'));
-    if (Number.isNaN(n) || n < 0) return null;
-    return n;
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value, type } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]:
+        type === 'checkbox'
+          ? (e.target as HTMLInputElement).checked
+          : name === 'delivery_fee'
+          ? parseFloat(value) || 0
+          : value,
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!tenant?.id || !formName.trim()) return;
-
-    const price = parsePrice();
-    if (price === null) {
-      setError('Informe um preço válido (taxa de entrega).');
-      return;
-    }
-
     try {
-      if (editing) {
-        await neighborhoodService.updateNeighborhood(editing.id, formName, price);
-      } else {
-        await neighborhoodService.createNeighborhood(formName, price, tenant.id);
-      }
+      setLoading(true);
+      // Simulating API call
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      setFormData({ name: '', zip_codes: '', delivery_fee: 0, active: true });
+      setEditingNeighborhood(null);
       setShowForm(false);
-      setEditing(null);
-      setFormName('');
-      setFormPrice('');
-      loadList();
+      loadNeighborhoods();
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Erro ao salvar bairro';
-      setError(message);
+      setError('Erro ao salvar bairro');
+    } finally {
+      setLoading(false);
     }
-  };
-
-  const handleEdit = (n: Neighborhood) => {
-    setEditing(n);
-    setFormName(n.name);
-    setFormPrice(String(n.price));
-    setShowForm(true);
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Excluir este bairro? Pedidos antigos podem perder a referência.')) return;
-
+    if (!confirm('Tem certeza que deseja deletar este bairro?')) return;
     try {
-      await neighborhoodService.deleteNeighborhood(id);
-      loadList();
+      await deleteNeighborhood(id);
+      setNeighborhoods((prev) => prev.filter((n) => n.id !== id));
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Erro ao excluir bairro';
-      setError(message);
+      setError('Erro ao deletar bairro');
     }
   };
 
-  const handleCancel = () => {
-    setShowForm(false);
-    setEditing(null);
-    setFormName('');
-    setFormPrice('');
+  const handleEdit = (neighborhood: Neighborhood) => {
+    setEditingNeighborhood(neighborhood);
+    setFormData({
+      name: neighborhood.name,
+      zip_codes: neighborhood.zip_codes.join(','),
+      delivery_fee: neighborhood.delivery_fee,
+      active: neighborhood.active,
+    });
+    setShowForm(true);
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">Bairros e taxa de entrega</h2>
-          <p className="text-gray-600 mt-1 text-sm">
-            Cadastre cada bairro com o valor da entrega. No checkout, o cliente escolhe bairro ou retirada.
-          </p>
-        </div>
-        {!showForm && (
-          <button
-            onClick={() => setShowForm(true)}
-            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
-          >
-            <Plus className="w-5 h-5" />
-            Novo bairro
-          </button>
-        )}
+    <div>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold">Gerenciar Bairros</h2>
+        <button
+          onClick={() => {
+            setEditingNeighborhood(null);
+            setFormData({ name: '', zip_codes: '', delivery_fee: 0, active: true });
+            setShowForm(true);
+          }}
+          className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700"
+        >
+          + Novo Bairro
+        </button>
       </div>
 
-      {error && (
-        <div className="flex items-center gap-3 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-          <AlertCircle className="w-5 h-5 flex-shrink-0" />
-          <span>{error}</span>
-          <button onClick={() => setError(null)} className="ml-auto text-red-700 hover:text-red-900 text-sm">
-            Fechar
-          </button>
-        </div>
-      )}
+      {error && <Toast message={error} type="error" />}
 
       {showForm && (
-        <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            {editing ? 'Editar bairro' : 'Novo bairro'}
-          </h3>
-          <div className="space-y-4">
+        <div className="mb-6 p-4 bg-gray-50 rounded-lg border">
+          <h3 className="text-lg font-bold mb-4">{editingNeighborhood ? 'Editar Bairro' : 'Novo Bairro'}</h3>
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Nome do bairro</label>
+              <label className="block text-sm font-medium mb-1">Nome do Bairro</label>
               <input
                 type="text"
-                value={formName}
-                onChange={(e) => setFormName(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                 required
+                disabled={loading}
               />
             </div>
+
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Taxa de entrega (R$)</label>
-              <input
-                type="text"
-                inputMode="decimal"
-                placeholder="Ex: 5,00"
-                value={formPrice}
-                onChange={(e) => setFormPrice(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
+              <label className="block text-sm font-medium mb-1">CEPs (separados por vírgula)</label>
+              <textarea
+                name="zip_codes"
+                value={formData.zip_codes}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                rows={3}
+                placeholder="01000-000, 02000-000, 03000-000"
+                disabled={loading}
               />
             </div>
-            <div className="flex gap-3">
+
+            <div>
+              <label className="block text-sm font-medium mb-1">Taxa de Entrega (R$)</label>
+              <input
+                type="number"
+                name="delivery_fee"
+                value={formData.delivery_fee}
+                onChange={handleChange}
+                step="0.01"
+                min="0"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                required
+                disabled={loading}
+              />
+            </div>
+
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                name="active"
+                checked={formData.active}
+                onChange={handleChange}
+                disabled={loading}
+              />
+              <span className="text-sm font-medium">Ativo</span>
+            </label>
+
+            <div className="flex gap-3 pt-2">
               <button
                 type="button"
-                onClick={handleCancel}
-                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium transition-colors"
+                onClick={() => setShowForm(false)}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100"
+                disabled={loading}
               >
                 Cancelar
               </button>
               <button
                 type="submit"
-                className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+                className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50"
+                disabled={loading}
               >
-                {editing ? 'Salvar' : 'Cadastrar'}
+                {loading ? 'Salvando...' : 'Salvar'}
               </button>
             </div>
-          </div>
-        </form>
+          </form>
+        </div>
       )}
 
-      {loading ? (
-        <div className="flex items-center justify-center h-96">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Carregando bairros...</p>
-          </div>
-        </div>
-      ) : list.length === 0 ? (
-        <div className="flex items-center justify-center h-96 bg-white rounded-lg border-2 border-dashed border-gray-300">
-          <div className="text-center px-4">
-            <p className="text-gray-600 text-lg mb-4">Nenhum bairro cadastrado</p>
-            {!showForm && (
-              <button
-                onClick={() => setShowForm(true)}
-                className="flex items-center gap-2 mx-auto bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
-              >
-                <Plus className="w-5 h-5" />
-                Cadastrar primeiro bairro
-              </button>
-            )}
-          </div>
-        </div>
+      {loading && neighborhoods.length === 0 ? (
+        <p className="text-center py-8">Carregando bairros...</p>
+      ) : neighborhoods.length === 0 ? (
+        <p className="text-center text-gray-500 py-8">Nenhum bairro cadastrado</p>
       ) : (
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <table className="w-full">
-            <thead className="bg-gray-50 border-b">
-              <tr>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Bairro</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Taxa</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {list.map((n) => (
-                <tr key={n.id} className="border-b hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4">
-                    <span className="font-medium text-gray-900">{n.name}</span>
-                  </td>
-                  <td className="px-6 py-4 text-gray-700">{formatCurrency(n.price)}</td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <button
-                        type="button"
-                        onClick={() => handleEdit(n)}
-                        className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 p-2 rounded transition-colors"
-                        aria-label="Editar"
-                      >
-                        <Pencil className="w-5 h-5" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(n.id)}
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50 p-2 rounded transition-colors"
-                        aria-label="Excluir"
-                      >
-                        <Trash2 className="w-5 h-5" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="grid gap-4">
+          {neighborhoods.map((neighborhood) => (
+            <div
+              key={neighborhood.id}
+              className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50"
+            >
+              <div className="flex-1">
+                <h3 className="font-semibold">{neighborhood.name}</h3>
+                <p className="text-sm text-gray-600">Taxa: R$ {neighborhood.delivery_fee.toFixed(2)}</p>
+                <p className="text-sm text-gray-600">CEPs: {neighborhood.zip_codes.join(', ')}</p>
+                <span className="text-sm">{neighborhood.active ? '✅ Ativo' : '❌ Inativo'}</span>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handleEdit(neighborhood)}
+                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                >
+                  Editar
+                </button>
+                <button
+                  onClick={() => handleDelete(neighborhood.id)}
+                  className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+                >
+                  Deletar
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>
   );
-};
+}

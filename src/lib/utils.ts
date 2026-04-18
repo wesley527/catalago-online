@@ -92,18 +92,6 @@ export function generateWhatsAppLink(
   items: Array<{ name: string; quantity: number; price: number }>,
   total: number,
   address: string,
-<<<<<<< HEAD
-  deliveryInfo: string,
-  observation?: string
-): string {
-  console.log('[generateWhatsAppLink] Telefone recebido:', phone);
-  
-  const itemsList = items
-    .map((item) => `${item.name} x${item.quantity} - R$ ${item.price.toFixed(2)}`)
-    .join('%0A');
-
-  const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-=======
   options?: { deliveryInfo?: string; subtotal?: number }
 ): string => {
   const cleanPhone = phone.replace(/\D/g, '');
@@ -115,21 +103,12 @@ export function generateWhatsAppLink(
     message += `${options.deliveryInfo}\n`;
   }
   message += `\n*Produtos:*\n`;
->>>>>>> adf068e03d9f7e7f77d8837055e3a6a822dc94c6
 
   const observationLine = observation?.trim()
     ? `%0A%0A📝 Observações:%0A${encodeURIComponent(observation.trim())}`
     : '';
 
-<<<<<<< HEAD
   const message = `Olá! Gostaria de confirmar meu pedido:%0A%0A*ITENS:*%0A${itemsList}%0A%0A*SUBTOTAL:* R$ ${subtotal.toFixed(2)}%0A*${deliveryInfo}*%0A*TOTAL:* R$ ${total.toFixed(2)}%0A%0A*DADOS:*%0A📍 ${address}%0A👤 ${name}${observationLine}`;
-=======
-  if (options?.subtotal !== undefined && options.subtotal !== total) {
-    message += `\n*Subtotal produtos:* ${formatCurrency(options.subtotal)}`;
-  }
-
-  message += `\n*Total:* ${formatCurrency(total)}`;
->>>>>>> adf068e03d9f7e7f77d8837055e3a6a822dc94c6
 
   // ✅ Formata o telefone adicionando 55 se necessário
   const formattedPhone = formatPhoneForWhatsApp(phone);

@@ -1,5 +1,4 @@
 import { supabase } from './supabase';
-<<<<<<< HEAD
 import type { User } from './types';
 
 export async function signInWithEmail(email: string, password: string): Promise<User> {
@@ -51,40 +50,6 @@ export async function getCurrentUser(): Promise<User | null> {
   }
 }
 
-export async function ensureAuthSessionForWrite(): Promise<void> {
-  try {
-    const {
-      data: { session },
-      error,
-    } = await supabase.auth.getSession();
-
-    if (error) {
-      console.error('[supabaseAuth] getSession error:', error);
-      throw new Error('Faça login novamente para salvar.');
-    }
-
-    if (!session?.user) {
-      throw new Error('Faça login novamente para salvar.');
-    }
-
-    const { error: refreshError } = await supabase.auth.refreshSession();
-    if (refreshError) {
-      console.warn('[supabaseAuth] refreshSession warning:', refreshError.message);
-    }
-  } catch (error) {
-    console.error('[supabaseAuth] ensureAuthSessionForWrite error:', error);
-    throw error;
-  }
-}
-
-export async function getCurrentSession() {
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  return session;
-}
-=======
-
 /** Garante sessão ativa e renova o JWT (útil após alterar metadata no Supabase). */
 export async function ensureAuthSessionForWrite(): Promise<void> {
   const {
@@ -101,4 +66,3 @@ export async function ensureAuthSessionForWrite(): Promise<void> {
     console.warn('refreshSession:', refreshError.message);
   }
 }
->>>>>>> adf068e03d9f7e7f77d8837055e3a6a822dc94c6

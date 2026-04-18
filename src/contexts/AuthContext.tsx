@@ -16,7 +16,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user is logged in on mount
     const checkAuth = async () => {
       try {
         const storedUser = localStorage.getItem('user');

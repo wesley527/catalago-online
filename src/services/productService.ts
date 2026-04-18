@@ -1,10 +1,5 @@
 import { supabase } from '../lib/supabase';
-<<<<<<< HEAD
 import type { Product } from '../lib/types';
-=======
-import { ensureAuthSessionForWrite } from '../lib/supabaseAuth';
-import { Product } from '../lib/types';
->>>>>>> adf068e03d9f7e7f77d8837055e3a6a822dc94c6
 
 export async function getProducts(tenantId: string): Promise<Product[]> {
   try {
@@ -39,13 +34,8 @@ export async function getProductById(id: string): Promise<Product | null> {
   }
 }
 
-<<<<<<< HEAD
 export async function createProduct(product: Omit<Product, 'id' | 'created_at' | 'updated_at'>): Promise<Product> {
   try {
-=======
-  async createProduct(product: Omit<Product, 'id' | 'created_at' | 'updated_at'>): Promise<Product> {
-    await ensureAuthSessionForWrite();
->>>>>>> adf068e03d9f7e7f77d8837055e3a6a822dc94c6
     const { data, error } = await supabase
       .from('products')
       .insert([product])
@@ -59,7 +49,6 @@ export async function createProduct(product: Omit<Product, 'id' | 'created_at' |
   }
 }
 
-<<<<<<< HEAD
 export async function updateProduct(id: string, updates: Partial<Product>): Promise<Product> {
   try {
     const { data, error } = await supabase
@@ -68,20 +57,6 @@ export async function updateProduct(id: string, updates: Partial<Product>): Prom
       .eq('id', id)
       .select()
       .single();
-=======
-  return data;
-},
-
-  async deleteProduct(id: string, tenantId?: string): Promise<void> {
-    await ensureAuthSessionForWrite();
-    let query = supabase.from('products').delete().eq('id', id);
-
-    if (tenantId) {
-      query = query.eq('tenant_id', tenantId);
-    }
-
-    const { error } = await query;
->>>>>>> adf068e03d9f7e7f77d8837055e3a6a822dc94c6
 
     if (error) throw error;
     return data;

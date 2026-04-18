@@ -24,18 +24,7 @@ export default function Header({ onCartClick, cartCount }: HeaderProps) {
       <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
         {/* Logo */}
         <div className="flex items-center gap-3">
-<<<<<<< HEAD
           <h1 className="text-2xl font-bold text-orange-600">🛒 Catálogo Online</h1>
-=======
-          {logoUrl ? (
-            <img src={logoUrl} alt={tenant?.name || 'Logo'} className="h-10 w-auto object-contain" />
-          ) : (
-            <Store className="w-8 h-8 text-blue-600" />
-          )}
-          <h1 className="text-2xl font-bold text-gray-900">
-            {tenant?.name || 'Super Sexy - Magazine'}
-          </h1>
->>>>>>> adf068e03d9f7e7f77d8837055e3a6a822dc94c6
         </div>
 
         {/* Navigation */}

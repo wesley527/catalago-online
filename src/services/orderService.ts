@@ -1,21 +1,6 @@
 import { supabase } from '../lib/supabase';
-<<<<<<< HEAD
 import type { Order, OrderItem } from '../lib/types';
-
-export const orderService = {
-  async createOrder(
-    customerName: string,
-    customerPhone: string,
-    customerAddress: string,
-    totalAmount: number,
-    tenantId: string,
-    deliveryType: 'retirada' | 'entrega',
-    deliveryAreaId: string | null,
-    deliveryFee: number
-  ): Promise<Order> {
-=======
 import { ensureAuthSessionForWrite } from '../lib/supabaseAuth';
-import { DeliveryType, Order, OrderItem } from '../lib/types';
 
 export type CreateOrderInput = {
   customerName: string;
@@ -23,7 +8,7 @@ export type CreateOrderInput = {
   customerAddress: string;
   totalAmount: number;
   tenantId: string;
-  deliveryType: DeliveryType;
+  deliveryType: 'retirada' | 'entrega';
   deliveryFee: number;
   neighborhoodId: string | null;
   neighborhoodName: string | null;
@@ -31,7 +16,6 @@ export type CreateOrderInput = {
 
 export const orderService = {
   async createOrder(input: CreateOrderInput): Promise<Order> {
->>>>>>> adf068e03d9f7e7f77d8837055e3a6a822dc94c6
     const { data, error } = await supabase
       .from('orders')
       .insert([
@@ -42,16 +26,10 @@ export const orderService = {
           total_amount: input.totalAmount,
           tenant_id: input.tenantId,
           status: 'pending',
-<<<<<<< HEAD
-          delivery_type: deliveryType,
-          delivery_fee: deliveryFee,
-          delivery_area_id: deliveryAreaId,
-=======
           delivery_type: input.deliveryType,
           delivery_fee: input.deliveryFee,
           neighborhood_id: input.neighborhoodId,
           neighborhood_name: input.neighborhoodName,
->>>>>>> adf068e03d9f7e7f77d8837055e3a6a822dc94c6
         },
       ])
       .select()
@@ -178,17 +156,11 @@ export const orderService = {
     if (error) throw error;
   },
 
-<<<<<<< HEAD
   async deleteAllOrdersByTenant(tenantId: string): Promise<void> {
     const { data: orders } = await supabase
       .from('orders')
       .select('id')
       .eq('tenant_id', tenantId);
-=======
-  async updateOrderStatus(id: string, status: string, tenantId?: string): Promise<void> {
-    await ensureAuthSessionForWrite();
-    let query = supabase.from('orders').update({ status }).eq('id', id);
->>>>>>> adf068e03d9f7e7f77d8837055e3a6a822dc94c6
 
     if (orders && orders.length > 0) {
       const orderIds = orders.map((o) => o.id);
@@ -207,3 +179,79 @@ export const orderService = {
     if (error) throw error;
   },
 };
+
+export async function getOrders(tenantId: string): Promise<Order[]> {
+  try {
+    const { data, error } = await supabase
+      .from('orders')
+      .select('*')
+      .eq('tenant_id', tenantId)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Error fetching orders:', error);
+    return [];
+  }
+}
+
+export async function getOrderById(id: string): Promise<Order | null> {
+  try {
+    const { data, error } = await supabase
+      .from('orders')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Error fetching order:', error);
+    return null;
+  }
+}
+
+export async function createOrder(order: Omit<Order, 'id' | 'created_at' | 'updated_at'>): Promise<Order> {
+  try {
+    const { data, error } = await supabase
+      .from('orders')
+      .insert([order])
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    throw new Error(`Error creating order: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
+
+export async function updateOrderStatus(id: string, status: Order['status']): Promise<Order> {
+  try {
+    const { data, error } = await supabase
+      .from('orders')
+      .update({ status, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    throw new Error(`Error updating order: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
+
+export async function deleteOrder(id: string): Promise<void> {
+  try {
+    const { error } = await supabase
+      .from('orders')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+  } catch (error) {
+    throw new Error(`Error deleting order: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}

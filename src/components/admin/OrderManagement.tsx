@@ -1,21 +1,11 @@
-<<<<<<< HEAD
-import React, { useState, useEffect } from 'react';
-=======
 import { useState, useEffect } from 'react';
 import { ChevronDown, AlertCircle, Trash2 } from 'lucide-react';
->>>>>>> adf068e03d9f7e7f77d8837055e3a6a822dc94c6
 import { useTenant } from '../../contexts/TenantContext';
 import Toast from '../Toast';
 import { getOrders, updateOrderStatus } from '../../services/orderService';
 import type { Order } from '../../lib/types';
 
-<<<<<<< HEAD
-export default function OrderManagement() {
-=======
 interface OrderWithItems {
-  id: string;
-  customer_name: string;
-  customer_phone: string;
   customer_address: string;
   total_amount: number;
   status: string;
@@ -27,11 +17,9 @@ interface OrderWithItems {
 }
 
 export const OrderManagement = () => {
->>>>>>> adf068e03d9f7e7f77d8837055e3a6a822dc94c6
   const { tenant } = useTenant();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -51,17 +39,11 @@ export const OrderManagement = () => {
     }
   };
 
-<<<<<<< HEAD
-  const handleStatusChange = async (orderId: string, newStatus: Order['status']) => {
-=======
   const handleClearAllOrders = async () => {
     if (!tenant?.id) return;
     if (
       !window.confirm(
         'Isso apagará todos os pedidos desta loja permanentemente. Deseja continuar?'
-      )
-    ) {
-      return;
     }
 
     try {
@@ -87,7 +69,6 @@ export const OrderManagement = () => {
   const handleStatusChange = async (orderId: string, newStatus: string) => {
     if (!tenant?.id) return;
 
->>>>>>> adf068e03d9f7e7f77d8837055e3a6a822dc94c6
     try {
       await updateOrderStatus(orderId, newStatus);
       setOrders((prev) =>
@@ -95,7 +76,6 @@ export const OrderManagement = () => {
           order.id === orderId ? { ...order, status: newStatus } : order
         )
       );
-    } catch (err) {
       setError('Erro ao atualizar status do pedido');
     }
   };
@@ -121,10 +101,6 @@ export const OrderManagement = () => {
   }
 
   return (
-<<<<<<< HEAD
-    <div>
-      <h2 className="text-2xl font-bold mb-6">Gerenciar Pedidos</h2>
-=======
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <h2 className="text-2xl font-bold text-gray-900">Gerenciar Pedidos</h2>
@@ -133,13 +109,8 @@ export const OrderManagement = () => {
             type="button"
             onClick={handleClearAllOrders}
             className="inline-flex items-center justify-center gap-2 px-4 py-2 border border-red-300 text-red-700 bg-red-50 hover:bg-red-100 rounded-lg font-medium transition-colors"
-          >
-            <Trash2 className="w-5 h-5" />
-            Zerar todos os pedidos
-          </button>
         )}
       </div>
->>>>>>> adf068e03d9f7e7f77d8837055e3a6a822dc94c6
 
       {error && <Toast message={error} type="error" />}
 
@@ -151,7 +122,6 @@ export const OrderManagement = () => {
             <div
               key={order.id}
               className="border rounded-lg overflow-hidden hover:shadow-md transition-shadow"
-            >
               <div
                 onClick={() => setExpandedOrderId(expandedOrderId === order.id ? null : order.id)}
                 className="p-4 bg-gray-50 cursor-pointer flex justify-between items-center"
@@ -179,41 +149,16 @@ export const OrderManagement = () => {
               </div>
 
               {expandedOrderId === order.id && (
-<<<<<<< HEAD
-                <div className="p-4 border-t">
-                  <div className="mb-4">
-                    <h4 className="font-semibold mb-2">Itens do Pedido:</h4>
-                    <div className="space-y-2 text-sm">
-                      {order.items.map((item, idx) => (
-                        <div key={idx} className="flex justify-between">
-                          <span>{item.product_name} x{item.quantity}</span>
-                          <span className="font-semibold">R$ {item.total.toFixed(2)}</span>
-                        </div>
-                      ))}
-=======
                 <div className="border-t px-6 py-4 bg-gray-50 space-y-4">
                   
                   {/* Cliente */}
                   <div>
                     <h4 className="font-semibold text-gray-900 mb-2">
-                      Informações do Cliente
-                    </h4>
-                    <div className="space-y-1 text-sm text-gray-700">
-                      <p><strong>Nome:</strong> {order.customer_name}</p>
-                      <p>
-                        <strong>WhatsApp:</strong>{' '}
-                        <a
-                          href={`https://wa.me/55${order.customer_phone.replace(/\D/g, '')}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-600 hover:underline"
-                        >
                           {formatPhone(order.customer_phone)}
                         </a>
                       </p>
                       <p><strong>Endereço / observações:</strong> {order.customer_address}</p>
                       <p><strong>Entrega:</strong> {deliveryLabel(order)}</p>
->>>>>>> adf068e03d9f7e7f77d8837055e3a6a822dc94c6
                     </div>
                   </div>
 
@@ -230,7 +175,6 @@ export const OrderManagement = () => {
                       className="flex-1 px-3 py-2 border border-gray-300 rounded-lg"
                     >
                       <option value="pending">Pendente</option>
-                      <option value="confirmed">Confirmado</option>
                       <option value="preparing">Preparando</option>
                       <option value="delivered">Entregue</option>
                       <option value="cancelled">Cancelado</option>

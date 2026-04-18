@@ -13,7 +13,6 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<ThemeType>('light');
 
-<<<<<<< HEAD
   useEffect(() => {
     // Load theme from localStorage
     const savedTheme = localStorage.getItem('theme') as ThemeType | null;
@@ -25,12 +24,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       setThemeState(prefersDark ? 'dark' : 'light');
     }
   }, []);
-=======
-  const primaryColor = tenantSettings?.primary_color || '#BA7E2F';
-  const secondaryColor = tenantSettings?.secondary_color || '#10b981';
-  const logoUrl = tenantSettings?.logo_url || null;
-  const bannerUrl = tenantSettings?.banner_url || null;
->>>>>>> adf068e03d9f7e7f77d8837055e3a6a822dc94c6
 
   useEffect(() => {
     // Update document class

@@ -1,52 +1,79 @@
 import { supabase } from '../lib/supabase';
-import { ensureAuthSessionForWrite } from '../lib/supabaseAuth';
-import { Neighborhood } from '../lib/types';
+import type { Neighborhood } from '../lib/types';
 
-export const neighborhoodService = {
-  async getAllByTenant(tenantId: string): Promise<Neighborhood[]> {
+export async function getNeighborhoods(tenantId: string): Promise<Neighborhood[]> {
+  try {
     const { data, error } = await supabase
       .from('neighborhoods')
       .select('*')
       .eq('tenant_id', tenantId)
-      .order('name', { ascending: true });
+      .eq('active', true)
+      .order('created_at', { ascending: false });
 
     if (error) throw error;
     return data || [];
-  },
+  } catch (error) {
+    console.error('Error fetching neighborhoods:', error);
+    return [];
+  }
+}
 
-  async createNeighborhood(
-    name: string,
-    price: number,
-    tenantId: string
-  ): Promise<Neighborhood> {
-    await ensureAuthSessionForWrite();
+export async function getNeighborhoodById(id: string): Promise<Neighborhood | null> {
+  try {
     const { data, error } = await supabase
       .from('neighborhoods')
-      .insert([{ name: name.trim(), price, tenant_id: tenantId }])
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Error fetching neighborhood:', error);
+    return null;
+  }
+}
+
+export async function createNeighborhood(neighborhood: Omit<Neighborhood, 'id' | 'created_at' | 'updated_at'>): Promise<Neighborhood> {
+  try {
+    const { data, error } = await supabase
+      .from('neighborhoods')
+      .insert([neighborhood])
       .select()
       .single();
 
     if (error) throw error;
     return data;
-  },
+  } catch (error) {
+    throw new Error(`Error creating neighborhood: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
 
-  async updateNeighborhood(id: string, name: string, price: number): Promise<Neighborhood> {
-    await ensureAuthSessionForWrite();
+export async function updateNeighborhood(id: string, updates: Partial<Neighborhood>): Promise<Neighborhood> {
+  try {
     const { data, error } = await supabase
       .from('neighborhoods')
-      .update({ name: name.trim(), price, updated_at: new Date().toISOString() })
+      .update(updates)
       .eq('id', id)
       .select()
       .single();
 
     if (error) throw error;
     return data;
-  },
+  } catch (error) {
+    throw new Error(`Error updating neighborhood: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
 
-  async deleteNeighborhood(id: string): Promise<void> {
-    await ensureAuthSessionForWrite();
-    const { error } = await supabase.from('neighborhoods').delete().eq('id', id);
+export async function deleteNeighborhood(id: string): Promise<void> {
+  try {
+    const { error } = await supabase
+      .from('neighborhoods')
+      .delete()
+      .eq('id', id);
 
     if (error) throw error;
-  },
-};
+  } catch (error) {
+    throw new Error(`Error deleting neighborhood: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
