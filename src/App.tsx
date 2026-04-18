@@ -4,14 +4,15 @@ import { AuthProvider } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
 import { TenantProvider } from './contexts/TenantContext';
 import { ThemeProvider } from './contexts/ThemeContext';
-import PrivateRoute from './components/PrivateRoute';
-import Header from './components/Header';
-import LoginPage from './pages/LoginPage';
+import { useAuth } from './contexts';
 import StorePage from './pages/StorePage';
 import AdminDashboard from './pages/AdminDashboard';
+import LoginPage from './pages/LoginPage';
 import './index.css';
 
 function App() {
+  const { user, loading } = useAuth();
+
   useEffect(() => {
     const viewport = document.querySelector('meta[name="viewport"]');
     if (!viewport) {
@@ -22,25 +23,21 @@ function App() {
     }
   }, []);
 
+  if (loading) {
+    return <div className="flex items-center justify-center min-h-screen">Carregando...</div>;
+  }
+
   return (
     <ThemeProvider>
       <AuthProvider>
         <TenantProvider>
           <CartProvider>
             <Router>
-              <Header />
               <Routes>
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/store" element={<StorePage />} />
-                <Route path="/" element={<Navigate to="/store" replace />} />
-                <Route
-                  path="/admin/*"
-                  element={
-                    <PrivateRoute requiredRole="admin">
-                      <AdminDashboard />
-                    </PrivateRoute>
-                  }
-                />
+                <Route path="/" element={<StorePage />} />
+                <Route path="/login" element={!user ? <LoginPage /> : <Navigate to="/" />} />
+                <Route path="/admin" element={user ? <AdminDashboard /> : <Navigate to="/login" />} />
+                <Route path="*" element={<Navigate to="/" />} />
               </Routes>
             </Router>
           </CartProvider>

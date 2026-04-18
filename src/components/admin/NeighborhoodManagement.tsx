@@ -4,7 +4,7 @@ import Toast from '../Toast';
 import { getNeighborhoods, deleteNeighborhood } from '../../services/neighborhoodService';
 import type { Neighborhood } from '../../lib/types';
 
-export default function NeighborhoodManagement() {
+export function NeighborhoodManagement() {
   const { tenant } = useTenant();
   const [neighborhoods, setNeighborhoods] = useState<Neighborhood[]>([]);
   const [loading, setLoading] = useState(false);

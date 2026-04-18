@@ -14,14 +14,17 @@ export default defineConfig({
   server: {
     port: 5173,
     open: true,
+    host: true,
   },
 
   build: {
     outDir: 'dist',
     sourcemap: false,
+    minify: 'esbuild',
+    chunkSizeWarningLimit: 1000,
   },
 
   define: {
-    __APP_VERSION__: JSON.stringify(process.env.npm_package_version),
+    __APP_VERSION__: JSON.stringify(process.env.npm_package_version || '1.0.0'),
   },
 })

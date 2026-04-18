@@ -4,7 +4,7 @@ import Toast from '../Toast';
 import { getCategories, deleteCategory } from '../../services/categoryService';
 import type { Category } from '../../lib/types';
 
-export default function CategoryManagement() {
+export function CategoryManagement() {
   const { tenant } = useTenant();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(false);

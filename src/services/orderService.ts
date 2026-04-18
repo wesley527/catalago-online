@@ -181,77 +181,40 @@ export const orderService = {
 };
 
 export async function getOrders(tenantId: string): Promise<Order[]> {
-  try {
-    const { data, error } = await supabase
-      .from('orders')
-      .select('*')
-      .eq('tenant_id', tenantId)
-      .order('created_at', { ascending: false });
+  const { data, error } = await supabase
+    .from('orders')
+    .select('*')
+    .eq('tenant_id', tenantId)
+    .order('created_at', { ascending: false });
 
-    if (error) throw error;
-    return data || [];
-  } catch (error) {
-    console.error('Error fetching orders:', error);
-    return [];
-  }
-}
-
-export async function getOrderById(id: string): Promise<Order | null> {
-  try {
-    const { data, error } = await supabase
-      .from('orders')
-      .select('*')
-      .eq('id', id)
-      .single();
-
-    if (error) throw error;
-    return data;
-  } catch (error) {
-    console.error('Error fetching order:', error);
-    return null;
-  }
+  if (error) throw error;
+  return data || [];
 }
 
 export async function createOrder(order: Omit<Order, 'id' | 'created_at' | 'updated_at'>): Promise<Order> {
-  try {
-    const { data, error } = await supabase
-      .from('orders')
-      .insert([order])
-      .select()
-      .single();
+  const { data, error } = await supabase
+    .from('orders')
+    .insert([order])
+    .select()
+    .single();
 
-    if (error) throw error;
-    return data;
-  } catch (error) {
-    throw new Error(`Error creating order: ${error instanceof Error ? error.message : 'Unknown error'}`);
-  }
+  if (error) throw error;
+  return data;
 }
 
-export async function updateOrderStatus(id: string, status: Order['status']): Promise<Order> {
-  try {
-    const { data, error } = await supabase
-      .from('orders')
-      .update({ status, updated_at: new Date().toISOString() })
-      .eq('id', id)
-      .select()
-      .single();
+export async function updateOrder(id: string, updates: Partial<Order>): Promise<Order> {
+  const { data, error } = await supabase
+    .from('orders')
+    .update(updates)
+    .eq('id', id)
+    .select()
+    .single();
 
-    if (error) throw error;
-    return data;
-  } catch (error) {
-    throw new Error(`Error updating order: ${error instanceof Error ? error.message : 'Unknown error'}`);
-  }
+  if (error) throw error;
+  return data;
 }
 
 export async function deleteOrder(id: string): Promise<void> {
-  try {
-    const { error } = await supabase
-      .from('orders')
-      .delete()
-      .eq('id', id);
-
-    if (error) throw error;
-  } catch (error) {
-    throw new Error(`Error deleting order: ${error instanceof Error ? error.message : 'Unknown error'}`);
-  }
+  const { error } = await supabase.from('orders').delete().eq('id', id);
+  if (error) throw error;
 }

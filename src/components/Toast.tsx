@@ -1,23 +1,26 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { X } from 'lucide-react';
 
 interface ToastProps {
   message: string;
   type?: 'success' | 'error' | 'info';
   duration?: number;
+  onClose?: () => void;
 }
 
-export default function Toast({ message, type = 'info', duration = 3000 }: ToastProps) {
-  const [visible, setVisible] = useState(true);
+export default function Toast({ message, type = 'info', duration = 3000, onClose }: ToastProps) {
+  const [isVisible, setIsVisible] = useState(true);
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      setVisible(false);
+      setIsVisible(false);
+      onClose?.();
     }, duration);
 
     return () => clearTimeout(timer);
-  }, [duration]);
+  }, [duration, onClose]);
 
-  if (!visible) return null;
+  if (!isVisible) return null;
 
   const bgColor = {
     success: 'bg-green-500',
@@ -25,16 +28,15 @@ export default function Toast({ message, type = 'info', duration = 3000 }: Toast
     info: 'bg-blue-500',
   }[type];
 
-  const icon = {
-    success: '✅',
-    error: '❌',
-    info: 'ℹ️',
-  }[type];
-
   return (
-    <div className={`fixed bottom-4 right-4 ${bgColor} text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-3 animate-pulse z-50`}>
-      <span>{icon}</span>
-      <p>{message}</p>
+    <div className={`${bgColor} text-white px-4 py-3 rounded-lg flex items-center justify-between gap-2`}>
+      <span>{message}</span>
+      <button
+        onClick={() => setIsVisible(false)}
+        className="text-white hover:text-gray-200"
+      >
+        <X size={18} />
+      </button>
     </div>
   );
 }

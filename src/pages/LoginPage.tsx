@@ -6,38 +6,32 @@ import { useAuth } from '../contexts/AuthContext';
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, signup } = useAuth();
+  const [isSignup, setIsSignup] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [name, setName] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
     try {
-      // Fazer login com Supabase
-      const { data, error: signInError } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password,
-      });
-
-      if (signInError) {
-        setError(signInError.message || 'Erro ao fazer login');
-        return;
-      }
-
-      if (data.user) {
-        // Usar o contexto para atualizar state
-        await login(email.trim(), password);
-        navigate('/dashboard');
+      if (isSignup) {
+        await signup(email, password, name);
+        setIsSignup(false);
+        setEmail('');
+        setPassword('');
+        setName('');
+      } else {
+        await login(email, password);
+        navigate('/');
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Erro desconhecido';
-      setError(message);
-      console.error('[LoginPage] Login error:', err);
+      setError(err instanceof Error ? err.message : 'Erro ao autenticar');
     } finally {
       setLoading(false);
     }
@@ -61,7 +55,20 @@ export default function LoginPage() {
           </div>
         )}
 
-        <form onSubmit={handleLogin} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {isSignup && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Nome</label>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-600 focus:border-blue-600"
+                required
+              />
+            </div>
+          )}
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
             <div className="relative">
@@ -100,18 +107,20 @@ export default function LoginPage() {
             className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-bold py-2 px-4 rounded-lg transition flex items-center justify-center gap-2"
           >
             {loading && <Loader className="w-4 h-4 animate-spin" />}
-            {loading ? 'Entrando...' : 'Entrar'}
+            {loading ? 'Processando...' : isSignup ? 'Criar conta' : 'Entrar'}
           </button>
         </form>
 
         <div className="mt-6 text-center text-sm text-gray-600">
-          <p>
-            Credenciais de teste:
-            <br />
-            <strong>Email:</strong> admin@example.com
-            <br />
-            <strong>Senha:</strong> senha123
-          </p>
+          <button
+            onClick={() => {
+              setIsSignup(!isSignup);
+              setError('');
+            }}
+            className="text-sm text-blue-600 hover:text-blue-500"
+          >
+            {isSignup ? 'Já tem conta? Entre aqui' : 'Não tem conta? Crie uma'}
+          </button>
         </div>
       </div>
     </div>

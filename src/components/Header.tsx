@@ -1,48 +1,39 @@
 import React from 'react';
-import { ShoppingCart, LogIn, Menu } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts';
+import { Link } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 
-interface HeaderProps {
-  onCartClick: () => void;
-  cartCount: number;
-}
-
-export default function Header({ onCartClick, cartCount }: HeaderProps) {
+export function Header() {
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
-  const navigate = useNavigate();
-
-  const handleLogout = async () => {
-    await logout();
-    navigate('/login');
-  };
 
   return (
     <header className={`${theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'} shadow-md`}>
-      <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
         {/* Logo */}
-        <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold text-orange-600">🛒 Catálogo Online</h1>
-        </div>
+        <Link to="/" className="text-2xl font-bold">
+          🛍️ Catálogo Online
+        </Link>
 
         {/* Navigation */}
-        <div className="flex items-center gap-6">
-          {user && (
+        <nav className="flex gap-4 items-center">
+          {user ? (
             <>
-              <span className="text-sm">
-                Olá, <strong>{user.email}</strong>
-              </span>
-              {user.role === 'admin' && (
-                <button
-                  onClick={() => navigate('/admin')}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  Admin
-                </button>
-              )}
+              <span>Olá, {user.email}</span>
+              <button
+                onClick={logout}
+                className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+              >
+                Sair
+              </button>
             </>
+          ) : (
+            <Link
+              to="/login"
+              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+            >
+              Login
+            </Link>
           )}
 
           {/* Theme Toggle */}
@@ -55,17 +46,7 @@ export default function Header({ onCartClick, cartCount }: HeaderProps) {
           >
             {theme === 'dark' ? '☀️' : '🌙'}
           </button>
-
-          {/* Logout */}
-          {user && (
-            <button
-              onClick={handleLogout}
-              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-            >
-              Sair
-            </button>
-          )}
-        </div>
+        </nav>
       </div>
     </header>
   );

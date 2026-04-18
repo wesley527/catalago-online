@@ -3,15 +3,15 @@
  */
 
 // Auth
-export { useAuth } from './AuthContext';
+export { AuthProvider, useAuth } from './AuthContext';
 // Uso: const { user, login, logout, loading } = useAuth();
 
 // Cart
-export { useCart } from './CartContext';
+export { CartProvider, useCart } from './CartContext';
 // Uso: const { items, addItem, removeItem, updateQuantity, clearCart, total } = useCart();
 
 // Tenant
-export { useTenant } from './TenantContext';
+export { TenantProvider, useTenant } from './TenantContext';
 // Uso: const { tenant, tenants, setTenant, loading } = useTenant();
 
 // Theme

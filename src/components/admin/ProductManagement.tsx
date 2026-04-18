@@ -5,7 +5,7 @@ import Toast from '../Toast';
 import { getProducts, deleteProduct } from '../../services/productService';
 import type { Product } from '../../lib/types';
 
-export default function ProductManagement() {
+export function ProductManagement() {
   const { tenant } = useTenant();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);

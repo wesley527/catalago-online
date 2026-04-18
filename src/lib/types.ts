@@ -2,31 +2,31 @@
 export interface User {
   id: string;
   email: string;
-  role?: 'admin' | 'user';
-  tenant_id?: string | null;
-}
-
-export interface Tenant {
-  id: string;
-  name: string;
-  slug: string;
-  logo_url?: string;
-  color?: string;
-  theme?: 'light' | 'dark';
+  role: 'admin' | 'store_owner' | 'customer';
+  display_name: string;
+  avatar_url?: string;
+  phone?: string;
+  bio?: string;
+  preferences?: Record<string, any>;
+  is_active: boolean;
+  last_login?: string;
   created_at: string;
   updated_at: string;
 }
 
-export interface Product {
+export interface Tenant {
   id: string;
-  tenant_id: string;
+  owner_id: string;
   name: string;
+  slug: string;
   description?: string;
-  price: number;
-  image_url?: string;
-  category_id?: string;
-  stock: number;
-  active: boolean;
+  logo_url?: string;
+  banner_url?: string;
+  email?: string;
+  phone?: string;
+  is_active: boolean;
+  plan: 'free' | 'basic' | 'premium';
+  settings?: Record<string, any>;
   created_at: string;
   updated_at: string;
 }
@@ -36,27 +36,38 @@ export interface Category {
   tenant_id: string;
   name: string;
   description?: string;
-  image_url?: string;
+  icon?: string;
+  order_index: number;
   active: boolean;
   created_at: string;
   updated_at: string;
 }
 
-export interface CartItem {
-  product_id: string;
+export interface Product {
+  id: string;
+  tenant_id: string;
+  category_id?: string;
   name: string;
+  description?: string;
   price: number;
-  quantity: number;
   image_url?: string;
+  stock: number;
+  active: boolean;
+  order_index: number;
+  metadata?: Record<string, any>;
+  created_at: string;
+  updated_at: string;
 }
-
-export type DeliveryType = 'pickup' | 'delivery';
 
 export interface Neighborhood {
   id: string;
   tenant_id: string;
   name: string;
-  price: number;
+  zip_code_start?: string;
+  zip_code_end?: string;
+  delivery_fee: number;
+  delivery_time_minutes: number;
+  is_active: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -65,46 +76,32 @@ export interface Order {
   id: string;
   tenant_id: string;
   customer_name: string;
-  customer_email: string;
+  customer_email?: string;
   customer_phone: string;
   customer_address: string;
-  total_amount: number;
-  status: string;
-  tenant_id: string;
-  delivery_type: DeliveryType;
+  neighborhood_id?: string;
+  delivery_type: 'pickup' | 'delivery';
+  payment_method: 'cash' | 'card' | 'pix';
+  subtotal: number;
   delivery_fee: number;
-  neighborhood_id: string | null;
-  neighborhood_name: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface OrderItem {
-  product_id: string;
-  product_name: string;
-  quantity: number;
-  unit_price: number;
   total: number;
-}
-
-export interface DeliveryArea {
-  id: string;
-  tenant_id: string;
-  name: string;
-  zip_codes: string[];
-  delivery_fee: number;
-  active: boolean;
+  status: 'pending' | 'confirmed' | 'preparing' | 'ready' | 'delivered' | 'cancelled';
+  items: Array<{
+    product_id: string;
+    name: string;
+    quantity: number;
+    price: number;
+    subtotal: number;
+  }>;
+  notes?: string;
   created_at: string;
   updated_at: string;
 }
 
-export interface Neighborhood {
+export interface CartItem {
   id: string;
-  tenant_id: string;
+  product_id: string;
   name: string;
-  zip_codes: string[];
-  delivery_fee: number;
-  active: boolean;
-  created_at: string;
-  updated_at: string;
+  price: number;
+  quantity: number;
 }

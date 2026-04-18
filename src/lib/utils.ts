@@ -65,27 +65,16 @@ export const removeStorageItem = (key: string): void => {
   }
 };
 
-// ✅ FORMATAR NÚMERO PARA WHATSAPP
+// Format phone for WhatsApp
 export const formatPhoneForWhatsApp = (phone: string): string => {
-  console.log('[formatPhoneForWhatsApp] Entrada:', phone);
-  
-  // Remove todos os caracteres que não são números
   let cleaned = phone.replace(/\D/g, '');
-  console.log('[formatPhoneForWhatsApp] Após remover caracteres:', cleaned);
-  
-  // Remove o 55 se existir no início (para evitar duplicação)
   if (cleaned.startsWith('55')) {
     cleaned = cleaned.substring(2);
-    console.log('[formatPhoneForWhatsApp] Removido 55 duplicado:', cleaned);
   }
-  
-  // Adiciona o 55 (código do Brasil) no início
-  cleaned = `55${cleaned}`;
-  console.log('[formatPhoneForWhatsApp] Saída final com 55:', cleaned);
-  
-  return cleaned;
+  return `55${cleaned}`;
 };
 
+// Generate WhatsApp link
 export function generateWhatsAppLink(
   phone: string,
   name: string,
@@ -93,29 +82,34 @@ export function generateWhatsAppLink(
   total: number,
   address: string,
   options?: { deliveryInfo?: string; subtotal?: number }
-): string => {
-  const cleanPhone = phone.replace(/\D/g, '');
+): string {
+  const itemsList = items
+    .map(
+      (item) =>
+        `• ${item.name} x${item.quantity} - ${formatCurrency(
+          item.price * item.quantity
+        )}`
+    )
+    .join('\n');
 
-  let message = `Olá! Confirmo meu pedido:\n\n`;
-  message += `*Cliente:* ${customerName}\n`;
-  message += `*Endereço / entrega:* ${address}\n`;
+  let message = `Olá! Gostaria de confirmar meu pedido:\n\n`;
+  message += `👤 Cliente: ${name}\n`;
+  message += `📍 Endereço: ${address}\n`;
+
   if (options?.deliveryInfo) {
     message += `${options.deliveryInfo}\n`;
   }
-  message += `\n*Produtos:*\n`;
 
-  const observationLine = observation?.trim()
-    ? `%0A%0A📝 Observações:%0A${encodeURIComponent(observation.trim())}`
-    : '';
+  message += `\n🛒 Itens:\n${itemsList}\n\n`;
 
-  const message = `Olá! Gostaria de confirmar meu pedido:%0A%0A*ITENS:*%0A${itemsList}%0A%0A*SUBTOTAL:* R$ ${subtotal.toFixed(2)}%0A*${deliveryInfo}*%0A*TOTAL:* R$ ${total.toFixed(2)}%0A%0A*DADOS:*%0A📍 ${address}%0A👤 ${name}${observationLine}`;
+  if (options?.subtotal !== undefined) {
+    message += `Subtotal: ${formatCurrency(options.subtotal)}\n`;
+  }
 
-  // ✅ Formata o telefone adicionando 55 se necessário
+  message += `💰 Total: ${formatCurrency(total)}`;
+
+  const encodedMessage = encodeURIComponent(message);
   const formattedPhone = formatPhoneForWhatsApp(phone);
-  
-  const whatsappLink = `https://wa.me/${formattedPhone}?text=${message}`;
-  
-  console.log('[generateWhatsAppLink] Link final:', whatsappLink);
-  
-  return whatsappLink;
+
+  return `https://wa.me/${formattedPhone}?text=${encodedMessage}`;
 }
